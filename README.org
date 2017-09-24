@@ -1,0 +1,263 @@
+# -*- org-confirm-babel-evaluate: nil -*-
+
+* README
+
+- Version :: 0.1.0
+
+Go library for communicating with cars [[https://en.wikipedia.org/wiki/On-board_diagnostics][OBD-II]] system using [[https://www.elmelectronics.com/ic/elm327/][ELM327]] based
+USB-devices.
+
+** How it works
+
+There are more than 10 different OBD-II signal protocol variations used by the
+various cars that exist. To avoid having to handle all the details of these
+protocols the ELM327 exists. The ELM327 acts a [[https://en.wikipedia.org/wiki/Facade_pattern][facade]] between the computer and
+the car. You talk to the ELM327 using a simple text based protocol similar to
+the [[https://en.wikipedia.org/wiki/Hayes_command_set][Hayes command set]] and the ELM327 takes care of the communication details
+of the car.
+
+#+LATEX: \vspace{0.5cm}
+#+LATEX: \begin{center}
+#+NAME: fig:overview
+#+ATTR_HTML: :style max-width: 100%;
+#+BEGIN_SRC dot :file docs/overview.png :exports results
+graph {
+  compound=true
+  newrank=true
+  rankdir=LR
+
+  edge [
+    penwidth="0.7" color="#333333" fontname="Fira Code" fontcolor="#333333"
+    fontsize="10"
+  ]
+
+  node [
+    shape="box" fontname="Fira Code" fontcolor="#333333"
+    style="filled" fillcolor="#B3DFB2"
+    margin="0.1"
+  ]
+
+  computer [label="Computer"]
+  elm [label="ELM327"]
+  sae18 [label="SAE J1850"]
+  sae19 [label="SAE J1939"]
+  iso91 [label="ISO 9141-2"]
+  iso14 [label="ISO 14230-4"]
+  iso15 [label="ISO 15765-4"]
+
+  computer -- elm [label="ELM327 commands"]
+  elm -- sae18
+  elm -- sae19
+  elm -- iso91
+  elm -- iso14
+  elm -- iso15
+}
+#+END_SRC
+
+#+ATTR_LATEX: :width 8cm
+#+RESULTS: fig:overview
+[[file:docs/overview.png]]
+
+#+LATEX: \end{center}
+
+Communicating with the ELM327 is similar to communicating with a web server.
+You make a *request* and wait for a *response*. However, in this context we are
+*calling a command* and waiting for *one or more responses*.
+
+This library is designed to be used in a way that resembles the way you
+physically use the device. You have a type called ~Device~ that represents
+a ELM327 device connected to the computer. This ~Device~ then has a function
+called ~RunCommand~ that sends a command to the actual device and then waits
+for a response.
+
+This library aims to be as type safe as possible, which means that you don't
+deal with raw text commands, instead you have different command /types/.
+
+All command /types/ need to implement the ~OBDCommand~ /interface/ to be
+able to be run on the device. Since there are A LOT of OBD commands, you can
+easily extend this library, by just implementing the ~OBDCommand~ /interface/
+of your commands.
+
+Let's start by looking at some example of how you use the library.
+
+*** Usage on Linux
+
+First of all, you need to plug in your ELM327 device into your computer and
+get the path to the device. You can plugin the device and check dmesg, this is
+what I get on my computer:
+
+#+BEGIN_EXAMPLE
+$ dmesg | tail
+[359720.858480] usb 6-2: Manufacturer: FTDI
+[359720.858482] usb 6-2: SerialNumber: A503GJEX
+[359720.897717] usbcore: registered new interface driver usbserial
+[359720.897733] usbcore: registered new interface driver usbserial_generic
+[359720.897748] usbserial: USB Serial support registered for generic
+[359720.901755] usbcore: registered new interface driver ftdi_sio
+[359720.901767] usbserial: USB Serial support registered for FTDI USB Serial Device
+[359720.901839] ftdi_sio 6-2:1.0: FTDI USB Serial Device converter detected
+[359720.901913] usb 6-2: Detected FT232RL
+[359720.904481] usb 6-2: FTDI USB Serial Device converter now attached to ttyUSB0
+#+END_EXAMPLE
+
+Now that I know that the device is available at ~/dev/ttyUSB0~ I can use the
+library to connect to the device and check the ~ELM327~ version of the device:
+
+*example1.go*
+#+BEGIN_SRC go
+package main
+
+import (
+    "fmt"
+    "github.com/rzetterberg/elmobd"
+)
+
+func main() {
+    dev, err := elmobd.NewDevice("/dev/ttyUSB0", false)
+
+	if err != nil {
+        fmt.Println("Failed to create new device", err)
+		return
+	}
+
+    version, err := dev.GetVersion()
+
+    if err != nil {
+        fmt.Println("Failed to get version", err)
+		return
+    }
+
+    fmt.Println("Device has version", version)
+}
+#+END_SRC
+
+When I run this executable on my machine with the ELM327 device plugged in
+I get the following result:
+
+#+BEGIN_EXAMPLE
+$ go run example.go
+Device has version OBDII by elm329@gmail.com
+#+END_EXAMPLE
+
+The next step is to run some OBD commands on the device. For this we need to
+plug in the ELM327 into our car and turn on the ignition.
+
+Like mentioned before you use the function ~RunCommand~ that accepts a
+~OBDCommand~ to run. A ~OBDCommand~ has 3 responsibilities:
+
+- Tell the ELM327 what command to run
+- Store the value
+- Convert the value to a common format
+
+So you start out by creating a new ~OBDCommand~ that does not contain a value.
+You then take that ~OBDCommand~ and call the ~RunCommand~ function with it.
+~RunCommand~ will then return the ~OBDCommand~ with the value from the car.
+
+Let's try this out by checking the RPM of the engine. There is a ~OBDCommand~
+for that defined in the library already, called ~EngineRPM~. We start by
+creating a new ~EngineRPM~ that we call ~RunCommand~ with:
+
+*example2.go*
+#+BEGIN_SRC go
+package main
+
+import (
+    "fmt"
+    "github.com/rzetterberg/elmobd"
+)
+
+func main() {
+    dev, err := elmobd.NewDevice("/dev/ttyUSB0", false)
+
+	if err != nil {
+        fmt.Println("Failed to create new device", err)
+		return
+	}
+
+    rpm, err := dev.RunOBDCommand(NewEngineRPM())
+
+    if err != nil {
+        fmt.Println("Failed to get rpm", err)
+		return
+    }
+
+    fmt.Println("Engine spins at %s RPMs", rpm.ValueAsLit())
+}
+#+END_SRC
+
+There are more than 180 different OBD commands, and cars have different support
+for these commands. So to avoid sending OBD commands to the car that it does not
+support we can check what commands the car support:
+
+*example3.go*
+#+BEGIN_SRC go
+package main
+
+import (
+    "fmt"
+    "github.com/rzetterberg/elmobd"
+)
+
+func main() {
+    dev, err := elmobd.NewDevice("/dev/ttyUSB0", false)
+
+	if err != nil {
+        fmt.Println("Failed to create new device", err)
+		return
+	}
+
+    supported, err := dev.CheckSupportedCommands()
+
+    if err != nil {
+        fmt.Println("Failed to check supported commands", err)
+		return
+    }
+
+    rpm := NewEngineRPM()
+
+    if supported.IsSupported(rpm) {
+		fmt.Println("The car supports checking RPM")
+    } else {
+		fmt.Println("The car does NOT supports checking RPM")
+    }
+}
+#+END_SRC
+
+The ~supported~ here is a ~SupportedCommands~ which is a special type that
+stores the raw lookup table and exposes two helper functions that reads this
+table:
+
+- ~IsSupported~
+- ~FilterSupported~
+
+These two functions are used to check if a single command is supported and
+filter out the supported commands of a list of commands.
+
+** Features
+
+- [X] Reading sensor data
+- [ ] Reading freezed sensor data
+- [ ] Reading trouble codes
+- [ ] Resetting Check Engine Light
+
+** Roadmap
+
+Next release (~0.2.0~) will happen during *October* this year and will focus on
+performance and sensor support:
+
+- Faster sensor reading
+- More predefined sensor types
+
+** Compability
+
+*** Platforms
+
+The library has been built and tested on the following platforms:
+
+- *Linux 4.9.25 x86_64*
+
+*** Cars
+
+The library has been used successfully on the following cars:
+
+- *Lexus IS200 Manual 2004*
