@@ -248,6 +248,8 @@ performance and sensor support:
 - Faster sensor reading
 - More predefined sensor types
 
+You can check the [[file:CHANGELOG.md][CHANGELOG]] for details of historic releases.
+
 ** Compability
 
 *** Platforms
