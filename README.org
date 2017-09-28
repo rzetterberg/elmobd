@@ -248,6 +248,8 @@ performance and sensor support:
 - Faster sensor reading
 - More predefined sensor types
 
+Feature complete release ~1.0.0~ is planned to be released by the end of 2017.
+
 You can check the [[file:CHANGELOG.md][CHANGELOG]] for details of historic releases.
 
 ** Compability
