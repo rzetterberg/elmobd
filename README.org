@@ -262,4 +262,4 @@ The library has been built and tested on the following platforms:
 
 The library has been used successfully on the following cars:
 
-- *Lexus IS200 Manual 2004*
+- *Lexus IS200 Manual 2004* (0.1.0)
