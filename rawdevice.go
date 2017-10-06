@@ -13,7 +13,7 @@ import (
  * External
  */
 
-type CommandResult struct {
+type RawResult struct {
 	Input     string
 	Outputs   []string
 	Error     error
@@ -22,7 +22,7 @@ type CommandResult struct {
 	TotalTime time.Duration
 }
 
-func (debug *CommandResult) FormatOverview() string {
+func (debug *RawResult) FormatOverview() string {
 	lines := []string{
 		"=======================================",
 		" Ran command \"%s\" in %s",
@@ -146,13 +146,13 @@ out:
 // For more information about AT commands, see:
 // https://en.wikipedia.org/wiki/Hayes_command_set
 // https://en.wikipedia.org/wiki/OBD-II_PIDs
-func (dev *RawDevice) RunCommand(command string) CommandResult {
+func (dev *RawDevice) RunCommand(command string) RawResult {
 	var err error
 	var startTotal time.Time
 	var startRead time.Time
 	var startWrite time.Time
 
-	result := CommandResult{
+	result := RawResult{
 		Input:     command,
 		WriteTime: 0,
 		ReadTime:  0,

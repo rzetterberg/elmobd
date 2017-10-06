@@ -3,11 +3,138 @@ package elmobd
 import (
 	"fmt"
 	"strings"
+	"strconv"
 )
 
 /*==============================================================================
- * Device
+ * External
  */
+
+type Result struct {
+	value []byte
+}
+
+func NewResult(rawLine string) (*Result, error) {
+	literals := strings.Split(rawLine, " ")
+
+	if len(literals) < 3 {
+		return nil, fmt.Errorf(
+			"Expected at least 3 OBD literals: %s", rawLine,
+		)
+	}
+
+	result := Result{make([]byte, 0)}
+
+	for i := range literals {
+		curr, err := strconv.ParseUint(
+			literals[i],
+			16,
+			8,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		result.value = append(result.value, uint8(curr))
+	}
+
+	return &result, nil
+}
+
+func (res *Result) Validate(cmd OBDCommand) error {
+	valueLen := len(res.value)
+	expLen   := int(cmd.DataWidth()+2)
+
+	if valueLen != expLen {
+		return fmt.Errorf(
+			"Expected %d bytes, found %d",
+			expLen,
+			valueLen,
+		)
+	}
+
+	modeResp := cmd.ModeId()+0x40
+
+	if res.value[0] != modeResp {
+		return fmt.Errorf(
+			"Expected mode echo %02X, got %02X",
+			modeResp,
+			res.value[0],
+		)
+	}
+
+	if OBDParameterId(res.value[1]) != cmd.ParameterId() {
+		return fmt.Errorf(
+			"Expected parameter echo %02X got %02X",
+			cmd.ParameterId(),
+			res.value[1],
+		)
+	}
+
+	return nil
+}
+
+func (res *Result) payloadAsUInt(expAmount int) (uint64, error) {
+	var result uint64
+
+	payload := res.value[2:]
+	amount  := len(payload)
+
+	if amount != expAmount {
+		return 0, fmt.Errorf(
+			"Expected %d bytes of payload, got %d", expAmount, amount,
+		)
+	}
+
+	for i := range payload {
+		curr := payload[amount-(i+1)]
+
+		result |= uint64(curr) << uint(i*8)
+	}
+
+	return result, nil
+}
+
+func (res *Result) PayloadAsUInt64() (uint64, error) {
+	result, err := res.payloadAsUInt(8)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return uint64(result), nil
+}
+
+func (res *Result) PayloadAsUInt32() (uint32, error) {
+	result, err := res.payloadAsUInt(4)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return uint32(result), nil
+}
+
+func (res *Result) PayloadAsUInt16() (uint16, error) {
+	result, err := res.payloadAsUInt(2)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return uint16(result), nil
+}
+
+func (res *Result) PayloadAsByte() (byte, error) {
+	result, err := res.payloadAsUInt(1)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return uint8(result), nil
+}
 
 type Device struct {
 	rawDevice   *RawDevice
@@ -79,55 +206,95 @@ func (dev *Device) CheckSupportedCommands() (*SupportedCommands, error) {
 		return nil, err
 	}
 
+	part2, err := dev.CheckSupportedPart(NewPart2Supported())
+
+	if err != nil {
+		return nil, err
+	}
+
+	part3, err := dev.CheckSupportedPart(NewPart3Supported())
+
+	if err != nil {
+		return nil, err
+	}
+
+	part4, err := dev.CheckSupportedPart(NewPart4Supported())
+
+	if err != nil {
+		return nil, err
+	}
+
+	part5, err := dev.CheckSupportedPart(NewPart5Supported())
+
+	if err != nil {
+		return nil, err
+	}
+
 	result := SupportedCommands{
 		uint32(part1.(*Part1Supported).Value),
+		uint32(part2.(*Part2Supported).Value),
+		uint32(part3.(*Part3Supported).Value),
+		uint32(part4.(*Part4Supported).Value),
+		uint32(part5.(*Part5Supported).Value),
 	}
 
 	return &result, nil
 }
 
 func (dev *Device) CheckSupportedPart(cmd OBDCommand) (OBDCommand, error) {
-	res := dev.rawDevice.RunCommand(cmd.ToCommand())
+	rawResult := dev.rawDevice.RunCommand(cmd.ToCommand())
 
-	if res.Error != nil {
-		return cmd, res.Error
+	if rawResult.Error != nil {
+		return cmd, rawResult.Error
 	}
 
 	if dev.outputDebug {
-		fmt.Println(res.FormatOverview())
+		fmt.Println(rawResult.FormatOverview())
 	}
 
-	data, err := parseSupportedResponse(cmd, res.Outputs)
+	result, err := parseSupportedResponse(cmd, rawResult.Outputs)
 
 	if err != nil {
 		return cmd, err
 	}
 
-	cmd.SetValue(data)
+	err = result.Validate(cmd)
 
-	return cmd, nil
+	if err != nil {
+		return cmd, err
+	}
+
+	err = cmd.SetValue(result)
+
+	return cmd, err
 }
 
 func (dev *Device) RunOBDCommand(cmd OBDCommand) (OBDCommand, error) {
-	res := dev.rawDevice.RunCommand(cmd.ToCommand())
+	rawResult := dev.rawDevice.RunCommand(cmd.ToCommand())
 
-	if res.Error != nil {
-		return cmd, res.Error
+	if rawResult.Error != nil {
+		return cmd, rawResult.Error
 	}
 
 	if dev.outputDebug {
-		fmt.Println(res.FormatOverview())
+		fmt.Println(rawResult.FormatOverview())
 	}
 
-	data, err := parseOBDResponse(cmd, res.Outputs)
+	result, err := parseOBDResponse(cmd, rawResult.Outputs)
 
 	if err != nil {
 		return cmd, err
 	}
 
-	cmd.SetValue(data)
+	err = result.Validate(cmd)
 
-	return cmd, nil
+	if err != nil {
+		return cmd, err
+	}
+
+	err = cmd.SetValue(result)
+
+	return cmd, err
 }
 
 func (dev *Device) RunManyOBDCommands(commands []OBDCommand) ([]OBDCommand, error) {
@@ -146,12 +313,12 @@ func (dev *Device) RunManyOBDCommands(commands []OBDCommand) ([]OBDCommand, erro
 	return result, nil
 }
 
-/*==============================================================================
- * Supported commands
- */
-
 type SupportedCommands struct {
 	part1 uint32
+	part2 uint32
+	part3 uint32
+	part4 uint32
+	part5 uint32
 }
 
 func (sc *SupportedCommands) IsSupported(cmd OBDCommand) bool {
@@ -162,8 +329,13 @@ func (sc *SupportedCommands) IsSupported(cmd OBDCommand) bool {
 	pid := cmd.ParameterId()
 
 	inPart1 := (sc.part1 >> uint32(32-pid)) & 1
+	inPart2 := (sc.part2 >> uint32(32-pid)) & 1
+	inPart3 := (sc.part3 >> uint32(32-pid)) & 1
+	inPart4 := (sc.part4 >> uint32(32-pid)) & 1
+	inPart5 := (sc.part5 >> uint32(32-pid)) & 1
 
-	return inPart1 == 1
+	return (inPart1 == 1) || (inPart2 == 1) ||
+		(inPart3 == 1) || (inPart4 == 1) || (inPart5 == 1)
 }
 
 func (sc *SupportedCommands) FilterSupported(commands []OBDCommand) []OBDCommand {
@@ -182,16 +354,16 @@ func (sc *SupportedCommands) FilterSupported(commands []OBDCommand) []OBDCommand
  * Internal
  */
 
-func parseSupportedResponse(cmd OBDCommand, outputs []string) (uint64, error) {
+func parseSupportedResponse(cmd OBDCommand, outputs []string) (*Result, error) {
 	if len(outputs) < 2 {
-		return 0, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"Expected more than one output, got: %q",
 			outputs,
 		)
 	}
 
 	if outputs[1] == "UNABLE TO CONNECT" {
-		return 0, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"Unable to connect to car, is the ignition on?",
 		)
 	}
@@ -199,9 +371,9 @@ func parseSupportedResponse(cmd OBDCommand, outputs []string) (uint64, error) {
 	return parseOBDResponse(cmd, outputs[1:])
 }
 
-func parseOBDResponse(cmd OBDCommand, outputs []string) (uint64, error) {
+func parseOBDResponse(cmd OBDCommand, outputs []string) (*Result, error) {
 	if len(outputs) < 1 {
-		return 0, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"Expected atleast one output, got: %q",
 			outputs,
 		)
@@ -210,52 +382,16 @@ func parseOBDResponse(cmd OBDCommand, outputs []string) (uint64, error) {
 	payload := outputs[0]
 
 	if payload == "UNABLE TO CONNECT" {
-		return 0, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"Unable to connect to car, is the ignition on?",
 		)
 	}
 
 	if payload == "NO DATA" {
-		return 0, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"No data from car, time out from elm device?",
 		)
 	}
 
-	hexLiterals := strings.Split(payload, " ")
-
-	if len(hexLiterals) != int(cmd.DataWidth()+2) {
-		return 0, fmt.Errorf(
-			"Expected %d hex literals, got %d",
-			cmd.DataWidth()+2,
-			len(hexLiterals),
-		)
-	}
-
-	modeResp := fmt.Sprintf("%02X", cmd.ModeId()+0x40)
-
-	if hexLiterals[0] != modeResp {
-		return 0, fmt.Errorf(
-			"Expected mode echo %s, got %s",
-			modeResp,
-			hexLiterals[0],
-		)
-	}
-
-	expParamEcho := fmt.Sprintf("%02X", cmd.ParameterId())
-
-	if hexLiterals[1] != expParamEcho {
-		return 0, fmt.Errorf(
-			"Expected parameter echo %s got %s",
-			expParamEcho,
-			hexLiterals[1],
-		)
-	}
-
-	bytes, err := HexLitsToBytes(hexLiterals[2:])
-
-	if err != nil {
-		return 0, err
-	}
-
-	return BytesToUint64(bytes)
+	return NewResult(payload)
 }

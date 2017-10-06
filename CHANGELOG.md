@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.0] - 2017-10-06
+
+### Added
+- More predefined OBD commands for getting:
+  - Short term fuel trim bank 1
+  - Long term fuel trim bank 1
+  - Short term fuel trim bank 2
+  - Long term fuel trim bank 2
+  - OBD standards vehicle conforms to
+  - Supported PIDs 21-40
+  - Supported PIDs 41-60
+  - Supported PIDs 61-80
+  - Supported PIDs 81-A0
+
+### Changed
+- More clear handling of results and conversions
+
 ## [0.1.0] - 2017-09-24
 
 ### Added

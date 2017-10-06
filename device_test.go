@@ -9,10 +9,10 @@ import (
  * Benchmarks
  */
 
-var resultParseOBDResponse uint64
+var resultParseOBDResponse *Result
 
 func benchParseOBDResponse(cmd OBDCommand, input []string, b *testing.B) {
-	var r uint64
+	var r *Result
 
 	for n := 0; n < b.N; n++ {
 		r, _ = parseOBDResponse(cmd, input)
@@ -56,7 +56,7 @@ func TestToCommand(t *testing.T) {
 }
 
 func TestIsSupported(t *testing.T) {
-	sc := SupportedCommands{0x0}
+	sc := SupportedCommands{0x0, 0x0, 0x0, 0x0, 0x0}
 
 	cmd1 := NewPart1Supported()
 
@@ -88,10 +88,16 @@ func TestParseSupportedResponse(t *testing.T) {
 		t.Error("Failed parsing", err)
 	}
 
-	exp := uint64(0x01020304)
+	val, err := res.PayloadAsUInt32()
 
-	if res != exp {
-		t.Errorf("Expected 0x%02X, got 0x%02X", exp, res)
+	if err != nil {
+		t.Error("Invalid payload", err)
+	}
+
+	exp := uint32(0x01020304)
+
+	if val != exp {
+		t.Errorf("Expected 0x%02X, got 0x%02X", exp, val)
 	}
 }
 
@@ -113,6 +119,22 @@ func TestParseOBDResponse(t *testing.T) {
 		scenario{
 			NewCoolantTemperature(),
 			[]string{"41 05 FF"},
+		},
+		scenario{
+			NewShortFuelTrim1(),
+			[]string{"41 06 F2"},
+		},
+		scenario{
+			NewLongFuelTrim1(),
+			[]string{"41 07 2F"},
+		},
+		scenario{
+			NewShortFuelTrim2(),
+			[]string{"41 08 20"},
+		},
+		scenario{
+			NewLongFuelTrim2(),
+			[]string{"41 09 01"},
 		},
 		scenario{
 			NewFuelPressure(),

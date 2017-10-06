@@ -2,7 +2,7 @@
 
 * README
 
-- Version :: 0.1.0
+- Version :: 0.2.0
 
 Go library for communicating with cars [[https://en.wikipedia.org/wiki/On-board_diagnostics][OBD-II]] system using [[https://www.elmelectronics.com/ic/elm327/][ELM327]] based
 USB-devices.
@@ -242,11 +242,11 @@ filter out the supported commands of a list of commands.
 
 ** Roadmap
 
-Next release (~0.2.0~) will happen during *October* this year and will focus on
+Next release (~0.3.0~) will happen during *October* this year and will focus on
 performance and sensor support:
 
 - Faster sensor reading
-- More predefined sensor types
+- More robust testing
 
 Feature complete release ~1.0.0~ is planned to be released by the end of 2017.
 
