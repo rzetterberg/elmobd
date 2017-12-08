@@ -174,7 +174,7 @@ func main() {
 		return
 	}
 
-    rpm, err := dev.RunOBDCommand(NewEngineRPM())
+    rpm, err := dev.RunOBDCommand(elmobd.NewEngineRPM())
 
     if err != nil {
         fmt.Println("Failed to get rpm", err)
@@ -213,7 +213,7 @@ func main() {
 		return
     }
 
-    rpm := NewEngineRPM()
+    rpm := elmobd.NewEngineRPM()
 
     if supported.IsSupported(rpm) {
 		fmt.Println("The car supports checking RPM")
