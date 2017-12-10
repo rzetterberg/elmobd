@@ -74,7 +74,7 @@ func (cmd *UIntCommand) ValueAsLit() string {
  * Specific types
  */
 
-// Supported PIDs 0 to 20
+// Part1Supported represents a command that checks the supported PIDs 0 to 20
 type Part1Supported struct {
 	BaseCommand
 	UIntCommand
@@ -99,7 +99,8 @@ func (cmd *Part1Supported) SetValue(result *Result) error {
 	return nil
 }
 
-// Engine load in percent
+// EngineLoad represents a command that checks the engine load in percent
+//
 // Min: 0.0
 // Max: 1.0
 type EngineLoad struct {
@@ -126,7 +127,9 @@ func (cmd *EngineLoad) SetValue(result *Result) error {
 	return nil
 }
 
-// Engine coolant temperature in Celsius
+// CoolantTemperature represents a command that checks the engine coolant
+// temperature in Celsius.
+//
 // Min: -40
 // Max: 215
 type CoolantTemperature struct {
@@ -153,7 +156,7 @@ func (cmd *CoolantTemperature) SetValue(result *Result) error {
 	return nil
 }
 
-// Abstract type for fuel trim, both for short term and long term.
+// fuelTrim is an abstract type for fuel trim, both for short term and long term.
 // Min: -100 (too rich)
 // Max: 99.2 (too lean)
 type fuelTrim struct {
@@ -173,7 +176,8 @@ func (cmd *fuelTrim) SetValue(result *Result) error {
 	return nil
 }
 
-// Short term fuel trim for bank 1
+// ShortFuelTrim1 represents a command that checks the short term fuel trim for
+// bank 1.
 type ShortFuelTrim1 struct {
 	fuelTrim
 }
@@ -187,7 +191,8 @@ func NewShortFuelTrim1() *ShortFuelTrim1 {
 	}
 }
 
-// Long term fuel trim for bank 1
+// LongFuelTrim1 represents a command that checks the long term fuel trim for
+// bank 1.
 type LongFuelTrim1 struct {
 	fuelTrim
 }
@@ -201,7 +206,8 @@ func NewLongFuelTrim1() *LongFuelTrim1 {
 	}
 }
 
-// Short term fuel trim for bank 2
+// ShortFuelTrim2 represents a command that checks the short term fuel trim for
+// bank 2.
 type ShortFuelTrim2 struct {
 	fuelTrim
 }
@@ -215,7 +221,8 @@ func NewShortFuelTrim2() *ShortFuelTrim2 {
 	}
 }
 
-// Long term fuel trim for bank 2
+// LongFuelTrim2 represents a command that checks the long term fuel trim for
+// bank 2.
 type LongFuelTrim2 struct {
 	fuelTrim
 }
@@ -229,7 +236,8 @@ func NewLongFuelTrim2() *LongFuelTrim2 {
 	}
 }
 
-// Fuel pressure in kPa
+// FuelPressure represents a command that checks the fuel pressure in kPa.
+//
 // Min: 0
 // Max: 765
 type FuelPressure struct {
@@ -256,7 +264,9 @@ func (cmd *FuelPressure) SetValue(result *Result) error {
 	return nil
 }
 
-// Intake manifold pressure in kPa
+// IntakeManifoldPressure represents a command that checks the intake manifold
+// pressure in kPa.
+//
 // Min: 0
 // Max: 255
 type IntakeManifoldPressure struct {
@@ -283,7 +293,8 @@ func (cmd *IntakeManifoldPressure) SetValue(result *Result) error {
 	return nil
 }
 
-// Engine revolutions per minute
+// EngineRP represents a command that checks eEngine revolutions per minute.
+//
 // Min: 0.0
 // Max: 16383.75
 type EngineRPM struct {
@@ -310,7 +321,8 @@ func (cmd *EngineRPM) SetValue(result *Result) error {
 	return nil
 }
 
-// Vechile speed in km/h
+// VehicleSpee represents a command that checks the vVechile speed in km/h.
+//
 // Min: 0
 // Max: 255
 type VehicleSpeed struct {
@@ -337,10 +349,13 @@ func (cmd *VehicleSpeed) SetValue(result *Result) error {
 	return nil
 }
 
-// Timing advance in degrees before TDC
+// TimingAdvance represents a command that checks the timing advance in degrees
+// before TDC.
+//
 // Min: -64
 // Max: 63.5
 //
+// For more info about TDC:
 // https://en.wikipedia.org/wiki/Dead_centre_(engineering)
 type TimingAdvance struct {
 	BaseCommand
@@ -366,7 +381,9 @@ func (cmd *TimingAdvance) SetValue(result *Result) error {
 	return nil
 }
 
-// Intake air temperature in Celsius
+// IntakeAirTemperature represents a command that checks the intake air
+// temperature in Celsius.
+//
 // Min: -40
 // Max: 215
 type IntakeAirTemperature struct {
@@ -393,9 +410,13 @@ func (cmd *IntakeAirTemperature) SetValue(result *Result) error {
 	return nil
 }
 
-// Mass Air Flow sensor flow rate grams/second
+// MafAirFlowRate represents a command that checks the mass Air Flow sensor
+// flow rate grams/second.
+//
 // Min: 0
 // Max: 655.35
+//
+// More information about MAF:
 // https://en.wikipedia.org/wiki/Mass_flow_sensor
 type MafAirFlowRate struct {
 	BaseCommand
@@ -421,7 +442,9 @@ func (cmd *MafAirFlowRate) SetValue(result *Result) error {
 	return nil
 }
 
-// Throttle position in percentage
+// ThrottlePosition represents a command that checks the throttle position in
+// percentage.
+//
 // Min: 0.0
 // Max: 100.0
 type ThrottlePosition struct {
@@ -448,7 +471,8 @@ func (cmd *ThrottlePosition) SetValue(result *Result) error {
 	return nil
 }
 
-// OBD standards this vehicle conforms to as a single decimal value:
+// OBDStandards represents a command that checks the OBD standards this vehicle
+// conforms to as a single decimal value:
 //
 // - 1       OBD-II as defined by the CARB
 // - 2       OBD as defined by the EPA
@@ -509,7 +533,9 @@ func (cmd *OBDStandards) SetValue(result *Result) error {
 	return nil
 }
 
-// Run time since engine start
+// RuntimeSinceStar represents a command that checks the run time since engine
+// start.
+//
 // Min: 0
 // Max: 65535
 type RuntimeSinceStart struct {
@@ -561,7 +587,7 @@ func (cmd *Part2Supported) SetValue(result *Result) error {
 	return nil
 }
 
-// Supported PIDs 41 to 60
+// Part3Supported represents a command that checks the supported PIDs 41 to 60.
 type Part3Supported struct {
 	BaseCommand
 	UIntCommand
@@ -586,7 +612,7 @@ func (cmd *Part3Supported) SetValue(result *Result) error {
 	return nil
 }
 
-// Supported PIDs 61 to 80
+// Part4Supported represents a command that checks the supported PIDs 61 to 80.
 type Part4Supported struct {
 	BaseCommand
 	UIntCommand
@@ -611,7 +637,7 @@ func (cmd *Part4Supported) SetValue(result *Result) error {
 	return nil
 }
 
-// Supported PIDs 81 to A0
+// Part5Supported represents a command that checks the supported PIDs 81 to A0.
 type Part5Supported struct {
 	BaseCommand
 	UIntCommand
@@ -658,6 +684,8 @@ var sensorCommands = []OBDCommand{
 	NewRuntimeSinceStart(),
 }
 
+// GetSensorCommands returns all the defined commands that are not commands
+// that check command availability on the connected car.
 func GetSensorCommands() []OBDCommand {
 	return sensorCommands
 }

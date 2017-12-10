@@ -13,6 +13,9 @@ import (
  * External
  */
 
+// Data type that contains the raw text output of running a raw command,
+// including information used in debugging to show what input caused what
+// error, how long the command took, etc.
 type RawResult struct {
 	Input     string
 	Outputs   []string
@@ -22,6 +25,7 @@ type RawResult struct {
 	TotalTime time.Duration
 }
 
+// Formats a result as an overview of what command was run and how long it took.
 func (debug *RawResult) FormatOverview() string {
 	lines := []string{
 		"=======================================",
@@ -40,8 +44,8 @@ func (debug *RawResult) FormatOverview() string {
 	)
 }
 
-// Stateful data type that only should be only be manipulated by the internal
-// functions so that it can be used safely across goroutines.
+// Stateful data type that only should be manipulated by the internal
+// functions, so that it can be used safely across goroutines.
 type RawDevice struct {
 	mutex      sync.Mutex
 	state      deviceState
@@ -204,6 +208,7 @@ out:
  * Internal
  */
 
+// Alias to improve readability by showing that the int has special meaning.
 type deviceState int
 
 const (

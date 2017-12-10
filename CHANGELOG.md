@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1] - Unreleased
+
+### Added
+- Godocs for functions and types
+- Separate examples
+- Integration tests
+
 ## [0.2.0] - 2017-10-06
 
 ### Added

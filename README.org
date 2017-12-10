@@ -2,10 +2,14 @@
 
 * README
 
-- Version :: 0.2.0
+- Version :: 0.2.1
+- Status :: Active
 
 Go library for communicating with cars [[https://en.wikipedia.org/wiki/On-board_diagnostics][OBD-II]] system using [[https://www.elmelectronics.com/ic/elm327/][ELM327]] based
 USB-devices.
+
+To make this library as good as possible feedback, bug reports and feature
+requests are very welcome in the GitHub issues of this project.
 
 ** How it works
 
@@ -104,30 +108,39 @@ Now that I know that the device is available at ~/dev/ttyUSB0~ I can use the
 library to connect to the device and check the ~ELM327~ version of the device:
 
 *example1.go*
-#+BEGIN_SRC go
+#+BEGIN_SRC go :tangle ./examples/example_1/main.go :mkdirp yes
 package main
 
 import (
-    "fmt"
-    "github.com/rzetterberg/elmobd"
+	"flag"
+	"fmt"
+	"github.com/rzetterberg/elmobd"
 )
 
 func main() {
-    dev, err := elmobd.NewDevice("/dev/ttyUSB0", false)
+	serialPath := flag.String(
+		"serial",
+		"/dev/ttyUSB0",
+		"Path to the serial device to use",
+	)
+
+	flag.Parse()
+
+	dev, err := elmobd.NewDevice(*serialPath, false)
 
 	if err != nil {
-        fmt.Println("Failed to create new device", err)
+		fmt.Println("Failed to create new device", err)
 		return
 	}
 
-    version, err := dev.GetVersion()
+	version, err := dev.GetVersion()
 
-    if err != nil {
-        fmt.Println("Failed to get version", err)
+	if err != nil {
+		fmt.Println("Failed to get version", err)
 		return
-    }
+	}
 
-    fmt.Println("Device has version", version)
+	fmt.Println("Device has version", version)
 }
 #+END_SRC
 
@@ -158,30 +171,39 @@ for that defined in the library already, called ~EngineRPM~. We start by
 creating a new ~EngineRPM~ that we call ~RunCommand~ with:
 
 *example2.go*
-#+BEGIN_SRC go
+#+BEGIN_SRC go :tangle ./examples/example_2/main.go :mkdirp yes
 package main
 
 import (
-    "fmt"
-    "github.com/rzetterberg/elmobd"
+	"flag"
+	"fmt"
+	"github.com/rzetterberg/elmobd"
 )
 
 func main() {
-    dev, err := elmobd.NewDevice("/dev/ttyUSB0", false)
+	serialPath := flag.String(
+		"serial",
+		"/dev/ttyUSB0",
+		"Path to the serial device to use",
+	)
+
+	flag.Parse()
+
+	dev, err := elmobd.NewDevice(*serialPath, false)
 
 	if err != nil {
-        fmt.Println("Failed to create new device", err)
+		fmt.Println("Failed to create new device", err)
 		return
 	}
 
-    rpm, err := dev.RunOBDCommand(elmobd.NewEngineRPM())
+	rpm, err := dev.RunOBDCommand(elmobd.NewEngineRPM())
 
-    if err != nil {
-        fmt.Println("Failed to get rpm", err)
+	if err != nil {
+		fmt.Println("Failed to get rpm", err)
 		return
-    }
+	}
 
-    fmt.Println("Engine spins at %s RPMs", rpm.ValueAsLit())
+	fmt.Printf("Engine spins at %s RPMs\n", rpm.ValueAsLit())
 }
 #+END_SRC
 
@@ -190,36 +212,45 @@ for these commands. So to avoid sending OBD commands to the car that it does not
 support we can check what commands the car support:
 
 *example3.go*
-#+BEGIN_SRC go
+#+BEGIN_SRC go :tangle ./examples/example_3/main.go :mkdirp yes
 package main
 
 import (
-    "fmt"
-    "github.com/rzetterberg/elmobd"
+	"flag"
+	"fmt"
+	"github.com/rzetterberg/elmobd"
 )
 
 func main() {
-    dev, err := elmobd.NewDevice("/dev/ttyUSB0", false)
+	serialPath := flag.String(
+		"serial",
+		"/dev/ttyUSB0",
+		"Path to the serial device to use",
+	)
+
+	flag.Parse()
+
+	dev, err := elmobd.NewDevice(*serialPath, false)
 
 	if err != nil {
-        fmt.Println("Failed to create new device", err)
+		fmt.Println("Failed to create new device", err)
 		return
 	}
 
-    supported, err := dev.CheckSupportedCommands()
+	supported, err := dev.CheckSupportedCommands()
 
-    if err != nil {
-        fmt.Println("Failed to check supported commands", err)
+	if err != nil {
+		fmt.Println("Failed to check supported commands", err)
 		return
-    }
+	}
 
-    rpm := elmobd.NewEngineRPM()
+	rpm := elmobd.NewEngineRPM()
 
-    if supported.IsSupported(rpm) {
+	if supported.IsSupported(rpm) {
 		fmt.Println("The car supports checking RPM")
-    } else {
+	} else {
 		fmt.Println("The car does NOT supports checking RPM")
-    }
+	}
 }
 #+END_SRC
 
@@ -236,19 +267,21 @@ filter out the supported commands of a list of commands.
 ** Features
 
 - [X] Reading sensor data
-- [ ] Reading freezed sensor data
 - [ ] Reading trouble codes
 - [ ] Resetting Check Engine Light
+- [ ] Reading freezed sensor data
+
+(Sorted by priority)
 
 ** Roadmap
 
-Next release (~0.3.0~) will happen during *October* this year and will focus on
+Next release (~0.3.0~) will happen during *December* this year and will focus on
 performance and sensor support:
 
 - Faster sensor reading
 - More robust testing
 
-Feature complete release ~1.0.0~ is planned to be released by the end of 2017.
+A feature complete release ~1.0.0~ is planned to be done in /2018 Q2/.
 
 You can check the [[file:CHANGELOG.md][CHANGELOG]] for details of historic releases.
 
@@ -258,10 +291,14 @@ You can check the [[file:CHANGELOG.md][CHANGELOG]] for details of historic relea
 
 The library has been built and tested on the following platforms:
 
-- *Linux 4.9.25 x86_64*
+| Operating system    | Go version |
+|---------------------+------------|
+| Linux 4.9.25 x86_64 | 1.9        |
 
 *** Cars
 
 The library has been used successfully on the following cars:
 
-- *Lexus IS200 Manual 2004* (0.1.0)
+| Car                     | Library version |
+|-------------------------+-----------------|
+| Lexus IS200 Manual 2004 |           0.1.0 |

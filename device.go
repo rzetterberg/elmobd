@@ -2,18 +2,33 @@ package elmobd
 
 import (
 	"fmt"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 /*==============================================================================
  * External
  */
 
+// Result represents the results from running a command on the ELM327 device,
+// encoded as a byte array. When you run a command on the ELM327 device the
+// response is a space-separated string of hex bytes, which looks something
+// like this:
+//
+//   41 0C 1A F8
+//
+// The first 2 bytes are control bytes, while the rest of the bytes represent
+// the actual result. So this data type contains an array of those bytes in
+// binary.
+//
+// This data type is only used internally to produce the processed value of
+// the run OBDCommand, so the end user will never use this data type.
 type Result struct {
 	value []byte
 }
 
+// NewResult constructrs a Result by taking care of parsing the hex bytes into
+// binary representation.
 func NewResult(rawLine string) (*Result, error) {
 	literals := strings.Split(rawLine, " ")
 
@@ -42,9 +57,11 @@ func NewResult(rawLine string) (*Result, error) {
 	return &result, nil
 }
 
+// Validates checks that the result is for the given OBDCommand by checking the
+// length of the data, comparing the mode ID and the parameter ID.
 func (res *Result) Validate(cmd OBDCommand) error {
 	valueLen := len(res.value)
-	expLen   := int(cmd.DataWidth()+2)
+	expLen := int(cmd.DataWidth() + 2)
 
 	if valueLen != expLen {
 		return fmt.Errorf(
@@ -54,7 +71,7 @@ func (res *Result) Validate(cmd OBDCommand) error {
 		)
 	}
 
-	modeResp := cmd.ModeId()+0x40
+	modeResp := cmd.ModeId() + 0x40
 
 	if res.value[0] != modeResp {
 		return fmt.Errorf(
@@ -75,11 +92,19 @@ func (res *Result) Validate(cmd OBDCommand) error {
 	return nil
 }
 
+// payloadAsUInt casts the Result as a unisgned 64-bit integer and making sure
+// it has the expected amount of bytes.
+//
+// This function is used by other more specific utility functions that cast the
+// result to a specific unsigned integer typer.
+//
+// By verifying the amount of bytes in the result using this function we can
+// safely cast the resulting uint64 into types with less bits.
 func (res *Result) payloadAsUInt(expAmount int) (uint64, error) {
 	var result uint64
 
 	payload := res.value[2:]
-	amount  := len(payload)
+	amount := len(payload)
 
 	if amount != expAmount {
 		return 0, fmt.Errorf(
@@ -136,11 +161,16 @@ func (res *Result) PayloadAsByte() (byte, error) {
 	return uint8(result), nil
 }
 
+// Device represents the connection to a ELM327 device. This is the data type
+// you use to run commands on the connected ELM327 device, see NewDevice for
+// creating a Device and RunOBDCommand for running commands.
 type Device struct {
 	rawDevice   *RawDevice
 	outputDebug bool
 }
 
+// NewDevice constructs a Device by initilizing the serial connection and
+// setting the protocol to talk with the car to "automatic".
 func NewDevice(devicePath string, debug bool) (*Device, error) {
 	rawDev, err := NewRawDevice(devicePath)
 
@@ -162,6 +192,10 @@ func NewDevice(devicePath string, debug bool) (*Device, error) {
 	return &dev, nil
 }
 
+// SetAutomaticProtocol tells the ELM327 device to automatically discover what
+// protocol to talk to the car with. How the protocol is chhosen is something
+// that the ELM327 does internally. If you're interested in how this works you
+// can look in the data sheet linked in the beginning of the package description.
 func (dev *Device) SetAutomaticProtocol() error {
 	res := dev.rawDevice.RunCommand("ATSP0")
 
@@ -183,6 +217,8 @@ func (dev *Device) SetAutomaticProtocol() error {
 	return nil
 }
 
+// GetVersion gets the version of the connected ELM327 device. The latest
+// version being v2.2.
 func (dev *Device) GetVersion() (string, error) {
 	res := dev.rawDevice.RunCommand("AT@1")
 
@@ -199,6 +235,11 @@ func (dev *Device) GetVersion() (string, error) {
 	return strings.Trim(version, " "), nil
 }
 
+// CheckSupportedCommands check which commands are supported (PID 1 to PID 160)
+// by the car connected to the ELM327 device.
+//
+// Since a single command can only contain 32-bits of information 5 commands
+// are run in series by this function to get the whole 160-bits of information.
 func (dev *Device) CheckSupportedCommands() (*SupportedCommands, error) {
 	part1, err := dev.CheckSupportedPart(NewPart1Supported())
 
@@ -241,6 +282,7 @@ func (dev *Device) CheckSupportedCommands() (*SupportedCommands, error) {
 	return &result, nil
 }
 
+// CheckSupportedPart checks the availability of a range of 32 commands.
 func (dev *Device) CheckSupportedPart(cmd OBDCommand) (OBDCommand, error) {
 	rawResult := dev.rawDevice.RunCommand(cmd.ToCommand())
 
@@ -269,6 +311,8 @@ func (dev *Device) CheckSupportedPart(cmd OBDCommand) (OBDCommand, error) {
 	return cmd, err
 }
 
+// RunOBDCommand runs the given OBDCommand on the connected ELM327 device and
+// populates the OBDCommand with the parsed output from the device.
 func (dev *Device) RunOBDCommand(cmd OBDCommand) (OBDCommand, error) {
 	rawResult := dev.rawDevice.RunCommand(cmd.ToCommand())
 
@@ -297,6 +341,7 @@ func (dev *Device) RunOBDCommand(cmd OBDCommand) (OBDCommand, error) {
 	return cmd, err
 }
 
+// RunManyOBDCommands is a helper function to run multiple commands in series.
 func (dev *Device) RunManyOBDCommands(commands []OBDCommand) ([]OBDCommand, error) {
 	var result []OBDCommand
 
@@ -313,6 +358,9 @@ func (dev *Device) RunManyOBDCommands(commands []OBDCommand) ([]OBDCommand, erro
 	return result, nil
 }
 
+// SupportedCommands represents the lookup table for which commands
+// (PID 1 to PID 160) that are supported by the car connected to the ELM327
+// device.
 type SupportedCommands struct {
 	part1 uint32
 	part2 uint32
@@ -321,6 +369,9 @@ type SupportedCommands struct {
 	part5 uint32
 }
 
+// IsSupported checks if the given OBDCommand is supported.
+//
+// It does this by comparing the PID of the OBDCommand against the lookup table.
 func (sc *SupportedCommands) IsSupported(cmd OBDCommand) bool {
 	if cmd.ParameterId() == 0 {
 		return true
@@ -338,6 +389,7 @@ func (sc *SupportedCommands) IsSupported(cmd OBDCommand) bool {
 		(inPart3 == 1) || (inPart4 == 1) || (inPart5 == 1)
 }
 
+// FilterSupported filters out the OBDCommands that are supported.
 func (sc *SupportedCommands) FilterSupported(commands []OBDCommand) []OBDCommand {
 	var result []OBDCommand
 
@@ -354,6 +406,12 @@ func (sc *SupportedCommands) FilterSupported(commands []OBDCommand) []OBDCommand
  * Internal
  */
 
+// parseSupportedResponse parses the raw output produced from running the given
+// OBDCommand. Is specific to OBDCommands that check the availability of a
+// command range.
+//
+// The output from these commands have a special structure that needs to be
+// handled before the generic parseOBDResponse function can be run on the result.
 func parseSupportedResponse(cmd OBDCommand, outputs []string) (*Result, error) {
 	if len(outputs) < 2 {
 		return nil, fmt.Errorf(
@@ -371,6 +429,11 @@ func parseSupportedResponse(cmd OBDCommand, outputs []string) (*Result, error) {
 	return parseOBDResponse(cmd, outputs[1:])
 }
 
+// parseOBDResponse parses the raw output produced from running the given
+// OBDCommand on the connected ELM327 device.
+//
+// The output is checked so that it doesn't represent a failed command run
+// before return a new Result.
 func parseOBDResponse(cmd OBDCommand, outputs []string) (*Result, error) {
 	if len(outputs) < 1 {
 		return nil, fmt.Errorf(

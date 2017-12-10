@@ -5,9 +5,10 @@ let
 in
   with pkgs; stdenv.mkDerivation rec {
     name    = "elmobd-${version}";
-    version = "0.2.0";
+    version = "0.2.1";
 
     buildInputs = [
       go
+      python3
     ];
   }
