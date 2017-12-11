@@ -279,6 +279,9 @@ table:
 These two functions are used to check if a single command is supported and
 filter out the supported commands of a list of commands.
 
+Please see [[https://godoc.org/github.com/rzetterberg/elmobd][the godocs]] for a more detailed explanation of the library and it's
+structure.
+
 ** Features
 
 - [X] Reading sensor data
