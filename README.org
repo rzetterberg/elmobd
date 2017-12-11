@@ -2,13 +2,25 @@
 
 * README
 
+[[file:https://img.shields.io/badge/status-active-green.svg]]
+[[https://travis-ci.org/rzetterberg/elmobd][file:https://travis-ci.org/rzetterberg/elmobd.svg?branch=master]]
+[[https://goreportcard.com/report/github.com/rzetterberg/elmobd][file:https://goreportcard.com/badge/github.com/rzetterberg/elmobd?status.svg]]
+[[https://godoc.org/github.com/rzetterberg/elmobd][file:https://godoc.org/github.com/rzetterberg/elmobd?status.svg]]
+
+#+NAME: version_output
+#+begin_src emacs-lisp :results raw :exports results
+(with-temp-buffer
+  (insert-file-contents "./VERSION")
+  (format "- Version :: %s" (buffer-string))))
+#+end_src
+
+#+RESULTS: version_output
 - Version :: 0.2.1
-- Status :: Active
 
 Go library for communicating with cars [[https://en.wikipedia.org/wiki/On-board_diagnostics][OBD-II]] system using [[https://www.elmelectronics.com/ic/elm327/][ELM327]] based
 USB-devices.
 
-To make this library as good as possible feedback, bug reports and feature
+To make this library as good as possible - feedback, bug reports and feature
 requests are very welcome in the GitHub issues of this project.
 
 ** How it works
@@ -24,7 +36,7 @@ of the car.
 #+LATEX: \begin{center}
 #+NAME: fig:overview
 #+ATTR_HTML: :style max-width: 100%;
-#+BEGIN_SRC dot :file docs/overview.png :exports results
+#+BEGIN_SRC dot :file docs/assets/overview.png :exports results :mkdirp yes
 graph {
   compound=true
   newrank=true
@@ -60,7 +72,7 @@ graph {
 
 #+ATTR_LATEX: :width 8cm
 #+RESULTS: fig:overview
-[[file:docs/overview.png]]
+[[file:docs/assets/overview.png]]
 
 #+LATEX: \end{center}
 
@@ -108,6 +120,7 @@ Now that I know that the device is available at ~/dev/ttyUSB0~ I can use the
 library to connect to the device and check the ~ELM327~ version of the device:
 
 *example1.go*
+#+NAME: src:example1
 #+BEGIN_SRC go :tangle ./examples/example_1/main.go :mkdirp yes
 package main
 
@@ -171,6 +184,7 @@ for that defined in the library already, called ~EngineRPM~. We start by
 creating a new ~EngineRPM~ that we call ~RunCommand~ with:
 
 *example2.go*
+#+NAME: src:example2
 #+BEGIN_SRC go :tangle ./examples/example_2/main.go :mkdirp yes
 package main
 
@@ -212,6 +226,7 @@ for these commands. So to avoid sending OBD commands to the car that it does not
 support we can check what commands the car support:
 
 *example3.go*
+#+NAME: src:example3
 #+BEGIN_SRC go :tangle ./examples/example_3/main.go :mkdirp yes
 package main
 

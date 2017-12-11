@@ -57,7 +57,7 @@ func NewResult(rawLine string) (*Result, error) {
 	return &result, nil
 }
 
-// Validates checks that the result is for the given OBDCommand by checking the
+// Validate checks that the result is for the given OBDCommand by checking the
 // length of the data, comparing the mode ID and the parameter ID.
 func (res *Result) Validate(cmd OBDCommand) error {
 	valueLen := len(res.value)
@@ -71,7 +71,7 @@ func (res *Result) Validate(cmd OBDCommand) error {
 		)
 	}
 
-	modeResp := cmd.ModeId() + 0x40
+	modeResp := cmd.ModeID() + 0x40
 
 	if res.value[0] != modeResp {
 		return fmt.Errorf(
@@ -81,10 +81,10 @@ func (res *Result) Validate(cmd OBDCommand) error {
 		)
 	}
 
-	if OBDParameterId(res.value[1]) != cmd.ParameterId() {
+	if OBDParameterID(res.value[1]) != cmd.ParameterID() {
 		return fmt.Errorf(
 			"Expected parameter echo %02X got %02X",
-			cmd.ParameterId(),
+			cmd.ParameterID(),
 			res.value[1],
 		)
 	}
@@ -121,6 +121,7 @@ func (res *Result) payloadAsUInt(expAmount int) (uint64, error) {
 	return result, nil
 }
 
+// PayloadAsUInt64 is a helper for getting payload as uint64.
 func (res *Result) PayloadAsUInt64() (uint64, error) {
 	result, err := res.payloadAsUInt(8)
 
@@ -131,6 +132,7 @@ func (res *Result) PayloadAsUInt64() (uint64, error) {
 	return uint64(result), nil
 }
 
+// PayloadAsUInt32 is a helper for getting payload as uint32.
 func (res *Result) PayloadAsUInt32() (uint32, error) {
 	result, err := res.payloadAsUInt(4)
 
@@ -141,6 +143,7 @@ func (res *Result) PayloadAsUInt32() (uint32, error) {
 	return uint32(result), nil
 }
 
+// PayloadAsUInt16 is a helper for getting payload as uint16.
 func (res *Result) PayloadAsUInt16() (uint16, error) {
 	result, err := res.payloadAsUInt(2)
 
@@ -151,6 +154,7 @@ func (res *Result) PayloadAsUInt16() (uint16, error) {
 	return uint16(result), nil
 }
 
+// PayloadAsByte is a helper for getting payload as byte.
 func (res *Result) PayloadAsByte() (byte, error) {
 	result, err := res.payloadAsUInt(1)
 
@@ -373,11 +377,11 @@ type SupportedCommands struct {
 //
 // It does this by comparing the PID of the OBDCommand against the lookup table.
 func (sc *SupportedCommands) IsSupported(cmd OBDCommand) bool {
-	if cmd.ParameterId() == 0 {
+	if cmd.ParameterID() == 0 {
 		return true
 	}
 
-	pid := cmd.ParameterId()
+	pid := cmd.ParameterID()
 
 	inPart1 := (sc.part1 >> uint32(32-pid)) & 1
 	inPart2 := (sc.part2 >> uint32(32-pid)) & 1

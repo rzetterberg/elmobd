@@ -8,11 +8,14 @@ import (
  * Generic types
  */
 
-type OBDParameterId byte
+// OBDParameterID is an alias to give meaning to this particular byte.
+type OBDParameterID byte
 
+// OBDCommand is an interface that all OBD commands needs to implement to be
+// able to be used with the Device.
 type OBDCommand interface {
-	ModeId() byte
-	ParameterId() OBDParameterId
+	ModeID() byte
+	ParameterID() OBDParameterID
 	DataWidth() byte
 	Key() string
 	SetValue(*Result) error
@@ -20,52 +23,70 @@ type OBDCommand interface {
 	ToCommand() string
 }
 
+// BaseCommand is a simple struct with the 3 members that all OBDCommands
+// will have in common.
 type BaseCommand struct {
-	parameterId byte
+	parameterID byte
 	dataWidth   byte
 	key         string
 }
 
-func (cmd *BaseCommand) ModeId() byte {
+// ModeID retrieves the mode ID of the command.
+func (cmd *BaseCommand) ModeID() byte {
 	return 0x01
 }
 
-func (cmd *BaseCommand) ParameterId() OBDParameterId {
-	return OBDParameterId(cmd.parameterId)
+// ParameterID retrieves the Parameter ID (also called PID) of the command.
+func (cmd *BaseCommand) ParameterID() OBDParameterID {
+	return OBDParameterID(cmd.parameterID)
 }
 
+// DataWidth retrieves the amount of bytes the command expects from the ELM327
+// devices.
 func (cmd *BaseCommand) DataWidth() byte {
 	return cmd.dataWidth
 }
 
+// Key retrieves the unique literal key of the command, used when exporting
+// commands.
 func (cmd *BaseCommand) Key() string {
 	return cmd.key
 }
 
+// ToCommand retrieves the raw command that can be sent to the ELM327 device.
 func (cmd *BaseCommand) ToCommand() string {
-	return fmt.Sprintf("%02X%02X", cmd.ModeId(), cmd.ParameterId())
+	return fmt.Sprintf("%02X%02X", cmd.ModeID(), cmd.ParameterID())
 }
 
+// FloatCommand is just a shortcut for commands that retrieve floating point
+// values from the ELM327 device.
 type FloatCommand struct {
 	Value float32
 }
 
+// ValueAsLit retrieves the value as a literal representation.
 func (cmd *FloatCommand) ValueAsLit() string {
 	return fmt.Sprintf("%f", cmd.Value)
 }
 
+// IntCommand is just a shortcut for commands that retrieve integer
+// values from the ELM327 device.
 type IntCommand struct {
 	Value int
 }
 
+// ValueAsLit retrieves the value as a literal representation.
 func (cmd *IntCommand) ValueAsLit() string {
 	return fmt.Sprintf("%d", cmd.Value)
 }
 
+// UIntCommand is just a shortcut for commands that retrieve unsigned
+// integer values from the ELM327 device.
 type UIntCommand struct {
 	Value uint32
 }
 
+// ValueAsLit retrieves the value as a literal representation.
 func (cmd *UIntCommand) ValueAsLit() string {
 	return fmt.Sprintf("%d", cmd.Value)
 }
@@ -80,6 +101,7 @@ type Part1Supported struct {
 	UIntCommand
 }
 
+// NewPart1Supported creates a new Part1Supported.
 func NewPart1Supported() *Part1Supported {
 	return &Part1Supported{
 		BaseCommand{0, 4, "supported_commands_part1"},
@@ -87,6 +109,8 @@ func NewPart1Supported() *Part1Supported {
 	}
 }
 
+// SetValue processes the byte array value into the right unsigned
+// integer value.
 func (cmd *Part1Supported) SetValue(result *Result) error {
 	payload, err := result.PayloadAsUInt32()
 
@@ -108,6 +132,7 @@ type EngineLoad struct {
 	FloatCommand
 }
 
+// NewEngineLoad creates a new EngineLoad with the correct parameters.
 func NewEngineLoad() *EngineLoad {
 	return &EngineLoad{
 		BaseCommand{4, 1, "engine_load"},
@@ -115,6 +140,7 @@ func NewEngineLoad() *EngineLoad {
 	}
 }
 
+// SetValue processes the byte array value into the right float value.
 func (cmd *EngineLoad) SetValue(result *Result) error {
 	payload, err := result.PayloadAsByte()
 
@@ -137,6 +163,8 @@ type CoolantTemperature struct {
 	IntCommand
 }
 
+// NewCoolantTemperature creates a new CoolantTemperature with the right
+// parameters.
 func NewCoolantTemperature() *CoolantTemperature {
 	return &CoolantTemperature{
 		BaseCommand{5, 1, "coolant_temperature"},
@@ -144,6 +172,7 @@ func NewCoolantTemperature() *CoolantTemperature {
 	}
 }
 
+// SetValue processes the byte array value into the right integer value.
 func (cmd *CoolantTemperature) SetValue(result *Result) error {
 	payload, err := result.PayloadAsByte()
 
@@ -164,6 +193,7 @@ type fuelTrim struct {
 	FloatCommand
 }
 
+// SetValue processes the byte array value into the right float value.
 func (cmd *fuelTrim) SetValue(result *Result) error {
 	payload, err := result.PayloadAsByte()
 
@@ -182,6 +212,7 @@ type ShortFuelTrim1 struct {
 	fuelTrim
 }
 
+// NewShortFuelTrim1 creates a new ShortFuelTrim1 with the right parameters.
 func NewShortFuelTrim1() *ShortFuelTrim1 {
 	return &ShortFuelTrim1{
 		fuelTrim{
@@ -197,6 +228,7 @@ type LongFuelTrim1 struct {
 	fuelTrim
 }
 
+// NewLongFuelTrim1 creates a new LongFuelTrim1 with the right parameters.
 func NewLongFuelTrim1() *LongFuelTrim1 {
 	return &LongFuelTrim1{
 		fuelTrim{
@@ -212,6 +244,7 @@ type ShortFuelTrim2 struct {
 	fuelTrim
 }
 
+// NewShortFuelTrim2 creates a new ShortFuelTrim2 with the right parameters.
 func NewShortFuelTrim2() *ShortFuelTrim2 {
 	return &ShortFuelTrim2{
 		fuelTrim{
@@ -227,6 +260,7 @@ type LongFuelTrim2 struct {
 	fuelTrim
 }
 
+// NewLongFuelTrim2 creates a new LongFuelTrim2 with the right parameters.
 func NewLongFuelTrim2() *LongFuelTrim2 {
 	return &LongFuelTrim2{
 		fuelTrim{
@@ -245,6 +279,7 @@ type FuelPressure struct {
 	UIntCommand
 }
 
+// NewFuelPressure creates a new FuelPressure with the right parameters.
 func NewFuelPressure() *FuelPressure {
 	return &FuelPressure{
 		BaseCommand{10, 1, "fuel_pressure"},
@@ -252,6 +287,7 @@ func NewFuelPressure() *FuelPressure {
 	}
 }
 
+// SetValue processes the byte array value into the right unsigned integer value.
 func (cmd *FuelPressure) SetValue(result *Result) error {
 	payload, err := result.PayloadAsByte()
 
@@ -274,6 +310,8 @@ type IntakeManifoldPressure struct {
 	UIntCommand
 }
 
+// NewIntakeManifoldPressure creates a new IntakeManifoldPressure with the
+// right parameters.
 func NewIntakeManifoldPressure() *IntakeManifoldPressure {
 	return &IntakeManifoldPressure{
 		BaseCommand{11, 1, "intake_manifold_pressure"},
@@ -281,6 +319,7 @@ func NewIntakeManifoldPressure() *IntakeManifoldPressure {
 	}
 }
 
+// SetValue processes the byte array value into the right unsigned integer value.
 func (cmd *IntakeManifoldPressure) SetValue(result *Result) error {
 	payload, err := result.PayloadAsByte()
 
@@ -293,7 +332,7 @@ func (cmd *IntakeManifoldPressure) SetValue(result *Result) error {
 	return nil
 }
 
-// EngineRP represents a command that checks eEngine revolutions per minute.
+// EngineRPM represents a command that checks eEngine revolutions per minute.
 //
 // Min: 0.0
 // Max: 16383.75
@@ -302,6 +341,7 @@ type EngineRPM struct {
 	FloatCommand
 }
 
+// NewEngineRPM creates a new EngineRPM with the right parameters.
 func NewEngineRPM() *EngineRPM {
 	return &EngineRPM{
 		BaseCommand{12, 2, "engine_rpm"},
@@ -309,6 +349,7 @@ func NewEngineRPM() *EngineRPM {
 	}
 }
 
+// SetValue processes the byte array value into the right float value.
 func (cmd *EngineRPM) SetValue(result *Result) error {
 	payload, err := result.PayloadAsUInt16()
 
@@ -321,7 +362,7 @@ func (cmd *EngineRPM) SetValue(result *Result) error {
 	return nil
 }
 
-// VehicleSpee represents a command that checks the vVechile speed in km/h.
+// VehicleSpeed represents a command that checks the vehicle speed in km/h.
 //
 // Min: 0
 // Max: 255
@@ -330,6 +371,7 @@ type VehicleSpeed struct {
 	UIntCommand
 }
 
+// NewVehicleSpeed creates a new VehicleSpeed with the right parameters
 func NewVehicleSpeed() *VehicleSpeed {
 	return &VehicleSpeed{
 		BaseCommand{13, 1, "vehicle_speed"},
@@ -337,6 +379,7 @@ func NewVehicleSpeed() *VehicleSpeed {
 	}
 }
 
+// SetValue processes the byte array value into the right unsigned integer value.
 func (cmd *VehicleSpeed) SetValue(result *Result) error {
 	payload, err := result.PayloadAsByte()
 
@@ -362,6 +405,7 @@ type TimingAdvance struct {
 	FloatCommand
 }
 
+// NewTimingAdvance creates a new TimingAdvance with the right parameters.
 func NewTimingAdvance() *TimingAdvance {
 	return &TimingAdvance{
 		BaseCommand{14, 1, "timing_advance"},
@@ -369,6 +413,7 @@ func NewTimingAdvance() *TimingAdvance {
 	}
 }
 
+// SetValue processes the byte array value into the right float value.
 func (cmd *TimingAdvance) SetValue(result *Result) error {
 	payload, err := result.PayloadAsByte()
 
@@ -391,6 +436,7 @@ type IntakeAirTemperature struct {
 	IntCommand
 }
 
+// NewIntakeAirTemperature creates a new IntakeAirTemperature with the right parameters.
 func NewIntakeAirTemperature() *IntakeAirTemperature {
 	return &IntakeAirTemperature{
 		BaseCommand{15, 1, "intake_air_temperature"},
@@ -398,6 +444,7 @@ func NewIntakeAirTemperature() *IntakeAirTemperature {
 	}
 }
 
+// SetValue processes the byte array value into the right integer value.
 func (cmd *IntakeAirTemperature) SetValue(result *Result) error {
 	payload, err := result.PayloadAsByte()
 
@@ -423,6 +470,7 @@ type MafAirFlowRate struct {
 	FloatCommand
 }
 
+// NewMafAirFlowRate creates a new MafAirFlowRate with the right parameters.
 func NewMafAirFlowRate() *MafAirFlowRate {
 	return &MafAirFlowRate{
 		BaseCommand{16, 2, "maf_air_flow_rate"},
@@ -430,6 +478,7 @@ func NewMafAirFlowRate() *MafAirFlowRate {
 	}
 }
 
+// SetValue processes the byte array value into the right float value.
 func (cmd *MafAirFlowRate) SetValue(result *Result) error {
 	payload, err := result.PayloadAsUInt16()
 
@@ -452,6 +501,7 @@ type ThrottlePosition struct {
 	FloatCommand
 }
 
+// NewThrottlePosition creates a new ThrottlePosition with the right parameters.
 func NewThrottlePosition() *ThrottlePosition {
 	return &ThrottlePosition{
 		BaseCommand{17, 1, "throttle_position"},
@@ -459,6 +509,7 @@ func NewThrottlePosition() *ThrottlePosition {
 	}
 }
 
+// SetValue processes the byte array value into the right float value.
 func (cmd *ThrottlePosition) SetValue(result *Result) error {
 	payload, err := result.PayloadAsByte()
 
@@ -514,6 +565,7 @@ type OBDStandards struct {
 	UIntCommand
 }
 
+// NewOBDStandards creates a new OBDStandards with the right parameters.
 func NewOBDStandards() *OBDStandards {
 	return &OBDStandards{
 		BaseCommand{28, 1, "obd_standards"},
@@ -521,6 +573,8 @@ func NewOBDStandards() *OBDStandards {
 	}
 }
 
+// SetValue processes the byte array value into the right unsigned integer
+// value.
 func (cmd *OBDStandards) SetValue(result *Result) error {
 	payload, err := result.PayloadAsByte()
 
@@ -533,7 +587,7 @@ func (cmd *OBDStandards) SetValue(result *Result) error {
 	return nil
 }
 
-// RuntimeSinceStar represents a command that checks the run time since engine
+// RuntimeSinceStart represents a command that checks the run time since engine
 // start.
 //
 // Min: 0
@@ -543,6 +597,8 @@ type RuntimeSinceStart struct {
 	UIntCommand
 }
 
+// NewRuntimeSinceStart creates a new RuntimeSinceStart with the right
+// parameters.
 func NewRuntimeSinceStart() *RuntimeSinceStart {
 	return &RuntimeSinceStart{
 		BaseCommand{31, 1, "runtime_since_engine_start"},
@@ -550,6 +606,8 @@ func NewRuntimeSinceStart() *RuntimeSinceStart {
 	}
 }
 
+// SetValue processes the byte array value into the right unsigned integer
+// value.
 func (cmd *RuntimeSinceStart) SetValue(result *Result) error {
 	payload, err := result.PayloadAsUInt16()
 
@@ -562,12 +620,13 @@ func (cmd *RuntimeSinceStart) SetValue(result *Result) error {
 	return nil
 }
 
-// Supported PIDs 21 to 40
+// Part2Supported represents a command that checks the supported PIDs 21 to 40.
 type Part2Supported struct {
 	BaseCommand
 	UIntCommand
 }
 
+// NewPart2Supported creates a new Part2Supported with the right parameters.
 func NewPart2Supported() *Part2Supported {
 	return &Part2Supported{
 		BaseCommand{32, 4, "supported_commands_part2"},
@@ -575,6 +634,8 @@ func NewPart2Supported() *Part2Supported {
 	}
 }
 
+// SetValue processes the byte array value into the right unsigned integer
+// value.
 func (cmd *Part2Supported) SetValue(result *Result) error {
 	payload, err := result.PayloadAsUInt32()
 
@@ -593,6 +654,7 @@ type Part3Supported struct {
 	UIntCommand
 }
 
+// NewPart3Supported creates a new Part3Supported with the right parameters.
 func NewPart3Supported() *Part3Supported {
 	return &Part3Supported{
 		BaseCommand{64, 4, "supported_commands_part3"},
@@ -600,6 +662,8 @@ func NewPart3Supported() *Part3Supported {
 	}
 }
 
+// SetValue processes the byte array value into the right unsigned integer
+// value.
 func (cmd *Part3Supported) SetValue(result *Result) error {
 	payload, err := result.PayloadAsUInt32()
 
@@ -618,6 +682,7 @@ type Part4Supported struct {
 	UIntCommand
 }
 
+// NewPart4Supported creates a new Part4Supported with the right parameters.
 func NewPart4Supported() *Part4Supported {
 	return &Part4Supported{
 		BaseCommand{96, 4, "supported_commands_part4"},
@@ -625,6 +690,8 @@ func NewPart4Supported() *Part4Supported {
 	}
 }
 
+// SetValue processes the byte array value into the right unsigned integer
+// value.
 func (cmd *Part4Supported) SetValue(result *Result) error {
 	payload, err := result.PayloadAsUInt32()
 
@@ -643,6 +710,7 @@ type Part5Supported struct {
 	UIntCommand
 }
 
+// NewPart5Supported creates a new Part5Supported with the right parameters..
 func NewPart5Supported() *Part5Supported {
 	return &Part5Supported{
 		BaseCommand{128, 4, "supported_commands_part5"},
@@ -650,6 +718,8 @@ func NewPart5Supported() *Part5Supported {
 	}
 }
 
+// SetValue processes the byte array value into the right unsigned integer
+// value.
 func (cmd *Part5Supported) SetValue(result *Result) error {
 	payload, err := result.PayloadAsUInt32()
 

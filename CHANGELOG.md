@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.1] - Unreleased
+## [0.2.1] - 2017-12-10
 
 ### Added
 - Godocs for functions and types

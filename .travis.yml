@@ -1,0 +1,7 @@
+language: go
+go:
+  - 1.9
+script:
+  - go tool vet --all .
+  - go build -v ./...
+  - go test ./...

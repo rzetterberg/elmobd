@@ -92,6 +92,7 @@ def check(args):
     command(['go', 'fmt'])
     command(['go', 'tool', 'vet', '--all', '.'])
     command(['go', 'build', '-v', './...'])
+    command(['golint'])
 
 def test(args):
     logger.info('Running unit tests')

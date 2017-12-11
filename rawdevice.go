@@ -13,7 +13,7 @@ import (
  * External
  */
 
-// Data type that contains the raw text output of running a raw command,
+// RawResult represents the raw text output of running a raw command,
 // including information used in debugging to show what input caused what
 // error, how long the command took, etc.
 type RawResult struct {
@@ -25,7 +25,8 @@ type RawResult struct {
 	TotalTime time.Duration
 }
 
-// Formats a result as an overview of what command was run and how long it took.
+// FormatOverview formats a result as an overview of what command was run and
+// how long it took.
 func (debug *RawResult) FormatOverview() string {
 	lines := []string{
 		"=======================================",
@@ -44,8 +45,7 @@ func (debug *RawResult) FormatOverview() string {
 	)
 }
 
-// Stateful data type that only should be manipulated by the internal
-// functions, so that it can be used safely across goroutines.
+// RawDevice represent the low level device connection.
 type RawDevice struct {
 	mutex      sync.Mutex
 	state      deviceState
@@ -54,8 +54,8 @@ type RawDevice struct {
 	serialPort *serial.Port
 }
 
-// Creates a new low-level ELM327 device manager by connecting to the device
-// at given path.
+// NewRawDevice creates a new low-level ELM327 device manager by connecting to
+// the device at given path.
 //
 // After a connection has been established the device is reset, and a minimum of
 // 800 ms blocking wait will occur. This makes sure the device does not have
@@ -92,8 +92,8 @@ func NewRawDevice(devicePath string) (*RawDevice, error) {
 	return dev, nil
 }
 
-// Restarts the device, resets all the settings to factory defaults and makes
-// sure it actually is a ELM327 device we are talking to.
+// Reset restarts the device, resets all the settings to factory defaults and
+// makes sure it actually is a ELM327 device we are talking to.
 //
 // In case this doesn't work, you should turn off/on the device.
 func (dev *RawDevice) Reset() error {
@@ -139,15 +139,15 @@ out:
 	return err
 }
 
-// Runs the given AT command by sending it to the device and waiting for the
-// output. There are no restrictions on what commands you can run with this
-// function, so be careful.
+// RunCommand runs the given AT/OBD command by sending it to the device and
+// waiting for the output. There are no restrictions on what commands you can
+// run with this function, so be careful.
 //
 // WARNING: Do not turn off echoing, because the underlying write function
 // relies on echo being on so that it can compare the input command and the
 // echo from the device.
 //
-// For more information about AT commands, see:
+// For more information about AT/OBD commands, see:
 // https://en.wikipedia.org/wiki/Hayes_command_set
 // https://en.wikipedia.org/wiki/OBD-II_PIDs
 func (dev *RawDevice) RunCommand(command string) RawResult {
@@ -208,7 +208,6 @@ out:
  * Internal
  */
 
-// Alias to improve readability by showing that the int has special meaning.
 type deviceState int
 
 const (

@@ -108,63 +108,63 @@ func TestParseOBDResponse(t *testing.T) {
 	}
 
 	scenarios := []scenario{
-		scenario{
+		{
 			NewPart1Supported(),
 			[]string{"41 00 02 03 04 05"},
 		},
-		scenario{
+		{
 			NewEngineLoad(),
 			[]string{"41 04 02"},
 		},
-		scenario{
+		{
 			NewCoolantTemperature(),
 			[]string{"41 05 FF"},
 		},
-		scenario{
+		{
 			NewShortFuelTrim1(),
 			[]string{"41 06 F2"},
 		},
-		scenario{
+		{
 			NewLongFuelTrim1(),
 			[]string{"41 07 2F"},
 		},
-		scenario{
+		{
 			NewShortFuelTrim2(),
 			[]string{"41 08 20"},
 		},
-		scenario{
+		{
 			NewLongFuelTrim2(),
 			[]string{"41 09 01"},
 		},
-		scenario{
+		{
 			NewFuelPressure(),
 			[]string{"41 0A BC"},
 		},
-		scenario{
+		{
 			NewIntakeManifoldPressure(),
 			[]string{"41 0B C2"},
 		},
-		scenario{
+		{
 			NewEngineRPM(),
 			[]string{"41 0C FF B2"},
 		},
-		scenario{
+		{
 			NewVehicleSpeed(),
 			[]string{"41 0D A9"},
 		},
-		scenario{
+		{
 			NewTimingAdvance(),
 			[]string{"41 0E 4F"},
 		},
-		scenario{
+		{
 			NewIntakeAirTemperature(),
 			[]string{"41 0F EB"},
 		},
-		scenario{
+		{
 			NewMafAirFlowRate(),
 			[]string{"41 10 C2 8B"},
 		},
-		scenario{
+		{
 			NewThrottlePosition(),
 			[]string{"41 11 FF"},
 		},
