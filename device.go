@@ -459,6 +459,10 @@ func parseOBDResponse(cmd OBDCommand, outputs []string) (*Result, error) {
 			"No data from car, time out from elm device?",
 		)
 	}
+	if payload == "SEARCHING..." && len(outputs) >= 2 {
+                fmt.Println("Ignoring reserved literal \"SEARCHING...\", considering next one.")
+                payload = outputs[1]
+	}
 
 	return NewResult(payload)
 }
