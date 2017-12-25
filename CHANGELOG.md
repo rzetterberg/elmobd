@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.2] - 2017-12-25
+
+### Fixed
+- "SEARCHING..." responses not being handled
+
 ## [0.2.1] - 2017-12-10
 
 ### Added

@@ -298,7 +298,7 @@ func (dev *Device) CheckSupportedPart(cmd OBDCommand) (OBDCommand, error) {
 		fmt.Println(rawResult.FormatOverview())
 	}
 
-	result, err := parseSupportedResponse(cmd, rawResult.Outputs)
+	result, err := parseOBDResponse(cmd, rawResult.Outputs)
 
 	if err != nil {
 		return cmd, err
@@ -410,53 +410,51 @@ func (sc *SupportedCommands) FilterSupported(commands []OBDCommand) []OBDCommand
  * Internal
  */
 
-// parseSupportedResponse parses the raw output produced from running the given
-// OBDCommand. Is specific to OBDCommands that check the availability of a
-// command range.
-//
-// The output from these commands have a special structure that needs to be
-// handled before the generic parseOBDResponse function can be run on the result.
-func parseSupportedResponse(cmd OBDCommand, outputs []string) (*Result, error) {
-	if len(outputs) < 2 {
-		return nil, fmt.Errorf(
-			"Expected more than one output, got: %q",
-			outputs,
-		)
-	}
-
-	if outputs[1] == "UNABLE TO CONNECT" {
-		return nil, fmt.Errorf(
-			"Unable to connect to car, is the ignition on?",
-		)
-	}
-
-	return parseOBDResponse(cmd, outputs[1:])
-}
-
-// parseOBDResponse parses the raw output produced from running the given
+// parseOBDResponse parses the raw outputs produced from running the given
 // OBDCommand on the connected ELM327 device.
 //
-// The output is checked so that it doesn't represent a failed command run
-// before return a new Result.
+// A response from the ELM327 device can fail for a variety of reasons,
+// such as failing to connect to the car, or not receiving any data from the
+// car.
+//
+// A response can also contain lines that say "SEARCHING..." or "BUS INIT"
+// before the actual payload.
+//
+// This function iterates the outputs, stops if it finds any errors and ignores
+// lines containing "SEARCHING..." or "BUS INIT". The first line that passes
+// these checks is assumed to be the payload.
+//
+// This means that this function cannot handle multiline responses
+// (such as getting the VIN number, and multiple PID requests baked into one).
+// Handling these more advanced responses is something that is going to be
+// implemented, but right now has been deprioritized.
 func parseOBDResponse(cmd OBDCommand, outputs []string) (*Result, error) {
-	if len(outputs) < 1 {
+	payload := ""
+
+	for _, out := range outputs {
+		if strings.HasPrefix(out, "UNABLE TO CONNECT") {
+			return nil, fmt.Errorf(
+				"'UNABLE TO CONNECT' received, is the ignition on?",
+			)
+		} else if strings.HasPrefix(out, "NO DATA") {
+			return nil, fmt.Errorf(
+				"'NO DATA' received, timeout from elm device?",
+			)
+		} else if strings.HasPrefix(out, "SEARCHING") {
+			continue
+		} else if strings.HasPrefix(out, "BUS INIT") {
+			continue
+		}
+
+		payload = out
+
+		break
+	}
+
+	if payload == "" {
 		return nil, fmt.Errorf(
-			"Expected atleast one output, got: %q",
+			"Empty payload parsed from outputs: %s",
 			outputs,
-		)
-	}
-
-	payload := outputs[0]
-
-	if payload == "UNABLE TO CONNECT" {
-		return nil, fmt.Errorf(
-			"Unable to connect to car, is the ignition on?",
-		)
-	}
-
-	if payload == "NO DATA" {
-		return nil, fmt.Errorf(
-			"No data from car, time out from elm device?",
 		)
 	}
 
