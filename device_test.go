@@ -73,34 +73,6 @@ func TestIsSupported(t *testing.T) {
 	}
 }
 
-func TestParseSupportedResponse(t *testing.T) {
-	// ---- it accepts valid response
-
-	res, err := parseSupportedResponse(
-		NewPart1Supported(),
-		[]string{
-			"SEARCHING...",
-			"41 00 01 02 03 04",
-		},
-	)
-
-	if err != nil {
-		t.Error("Failed parsing", err)
-	}
-
-	val, err := res.PayloadAsUInt32()
-
-	if err != nil {
-		t.Error("Invalid payload", err)
-	}
-
-	exp := uint32(0x01020304)
-
-	if val != exp {
-		t.Errorf("Expected 0x%02X, got 0x%02X", exp, val)
-	}
-}
-
 func TestParseOBDResponse(t *testing.T) {
 	type scenario struct {
 		command OBDCommand
@@ -167,6 +139,37 @@ func TestParseOBDResponse(t *testing.T) {
 		{
 			NewThrottlePosition(),
 			[]string{"41 11 FF"},
+		},
+		// Regression tests for https://github.com/rzetterberg/elmobd/issues/5
+		{
+			NewEngineRPM(),
+			[]string{
+				"SEARCHING...",
+				"41 0C FF B2",
+			},
+		},
+		{
+			NewEngineRPM(),
+			[]string{
+				"BUS INIT",
+				"41 0C FF B2",
+			},
+		},
+		{
+			NewThrottlePosition(),
+			[]string{
+				"SEARCHING...",
+				"SEARCHING...",
+				"SEARCHING...",
+				"41 11 FF",
+			},
+		},
+		{
+			NewPart1Supported(),
+			[]string{
+				"SEARCHING...",
+				"41 00 01 02 03 04",
+			},
 		},
 	}
 
