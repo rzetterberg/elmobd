@@ -50,9 +50,9 @@ func assertEqual(t *testing.T, a interface{}, b interface{}) {
 }
 
 func TestToCommand(t *testing.T) {
-	assertEqual(t, NewPart1Supported().ToCommand(), "0100")
-	assertEqual(t, NewEngineLoad().ToCommand(), "0104")
-	assertEqual(t, NewVehicleSpeed().ToCommand(), "010D")
+	assertEqual(t, NewPart1Supported().ToCommand(), "01001")
+	assertEqual(t, NewEngineLoad().ToCommand(), "01041")
+	assertEqual(t, NewVehicleSpeed().ToCommand(), "010D1")
 }
 
 func TestIsSupported(t *testing.T) {

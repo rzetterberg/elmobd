@@ -2,6 +2,7 @@ package elmobd
 
 import (
 	"fmt"
+	"math"
 )
 
 /*==============================================================================
@@ -54,8 +55,19 @@ func (cmd *BaseCommand) Key() string {
 }
 
 // ToCommand retrieves the raw command that can be sent to the ELM327 device.
+//
+// The command is sent without spaces between the parts, the amount of data
+// lines is added to the end of the command to speed up the communication.
+// See page 33 of the ELM327 data sheet for details on why we do this.
 func (cmd *BaseCommand) ToCommand() string {
-	return fmt.Sprintf("%02X%02X", cmd.ModeID(), cmd.ParameterID())
+	dataLines := float64(cmd.DataWidth()) / 4.0
+
+	return fmt.Sprintf(
+		"%02X%02X%1X",
+		cmd.ModeID(),
+		cmd.ParameterID(),
+		byte(math.Ceil(dataLines)),
+	)
 }
 
 // FloatCommand is just a shortcut for commands that retrieve floating point
