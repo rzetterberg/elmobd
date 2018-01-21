@@ -57,8 +57,10 @@ func NewResult(rawLine string) (*Result, error) {
 	return &result, nil
 }
 
-// Validate checks that the result is for the given OBDCommand by checking the
-// length of the data, comparing the mode ID and the parameter ID.
+// Validate checks that the result is for the given OBDCommand by:
+// - Comparing the bytes received and the expected amount of bytes to receive
+// - Comparing the received mode ID and the expected mode ID
+// - Comparing the received parameter ID and the expected parameter ID
 func (res *Result) Validate(cmd OBDCommand) error {
 	valueLen := len(res.value)
 	expLen := int(cmd.DataWidth() + 2)
