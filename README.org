@@ -96,7 +96,11 @@ of your commands.
 
 Let's start by looking at some example of how you use the library.
 
-*** Usage on Linux
+** Example usage
+
+Note: these examples are performed on Linux. If you are using another platform
+there should be minimal changes, but they are not documented yet. Go ahead
+and put a :+1: on issue #11 if you think this should be prioritized.
 
 First of all, you need to plug in your ELM327 device into your computer and
 get the path to the device. You can plugin the device and check dmesg, this is
@@ -273,11 +277,57 @@ The ~supported~ here is a ~SupportedCommands~ which is a special type that
 stores the raw lookup table and exposes two helper functions that reads this
 table:
 
-- ~IsSupported~
-- ~FilterSupported~
+- ~IsSupported~ :: Check if given command is supported
+- ~FilterSupported~ :: Filters out supported commands from given list
 
-These two functions are used to check if a single command is supported and
-filter out the supported commands of a list of commands.
+For simplicity there's a function called ~GetSensorCommands~ which gives you a
+list of all the commands defined in the library. You can use this list of
+commands and filter out what commands are supported on by car:
+
+*example4.go*
+#+NAME: src:example4
+#+BEGIN_SRC go :tangle ./examples/example_4/main.go :mkdirp yes
+package main
+
+import (
+	"flag"
+	"fmt"
+	"github.com/rzetterberg/elmobd"
+)
+
+func main() {
+	serialPath := flag.String(
+		"serial",
+		"/dev/ttyUSB0",
+		"Path to the serial device to use",
+	)
+
+	flag.Parse()
+
+	dev, err := elmobd.NewDevice(*serialPath, false)
+
+	if err != nil {
+		fmt.Println("Failed to create new device", err)
+		return
+	}
+
+	supported, err := dev.CheckSupportedCommands()
+
+	if err != nil {
+		fmt.Println("Failed to check supported commands", err)
+		return
+	}
+
+	allCommands := elmobd.GetSensorCommands()
+	carCommands := supported.FilterSupported(allCommands)
+
+	fmt.Printf("%d of %d commands supported:\n", carCommands, allCommands)
+
+	for _, cmd := range carCommands {
+		fmt.Printf("- %s supported\n", cmd.Key())
+	}
+}
+#+END_SRC
 
 Please see [[https://godoc.org/github.com/rzetterberg/elmobd][the godocs]] for a more detailed explanation of the library and it's
 structure.
@@ -289,19 +339,14 @@ structure.
 - [ ] Resetting Check Engine Light
 - [ ] Reading freezed sensor data
 
-(Sorted by priority)
-
 ** Roadmap
 
-Next release (~0.3.0~) will happen during *December* this year and will focus on
-performance and sensor support:
+The project uses quarterly milestones to plan upcoming changes. The current
+quarter will focus on improving documentation, to see the details of what
+will be done see the milestone
+[2018 Q1](https://github.com/rzetterberg/elmobd/milestone/2).
 
-- Faster sensor reading
-- More robust testing
-
-A feature complete release ~1.0.0~ is planned to be done in /2018 Q2/.
-
-You can check the [[file:CHANGELOG.md][CHANGELOG]] for details of historic releases.
+Changes of the library are tracked in the [[file:CHANGELOG.md][CHANGELOG]].
 
 ** Compability
 
@@ -317,6 +362,6 @@ The library has been built and tested on the following platforms:
 
 The library has been used successfully on the following cars:
 
-| Car                     | Library version |
-|-------------------------+-----------------|
-| Lexus IS200 Manual 2004 |           0.1.0 |
+| Car                     | Library version | Tester       |
+|-------------------------+-----------------+--------------|
+| Lexus IS200 Manual 2004 |           0.3.0 | @rzetterberg |
