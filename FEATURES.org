@@ -1,0 +1,82 @@
+# -*- org-confirm-babel-evaluate: nil -*-
+
+#+TITLE: Features
+
+This project uses [[https://en.wikipedia.org/wiki/Behavior-driven_development][Behavior-driven development]] and defines all features in [[https://en.wikipedia.org/wiki/Cucumber_(software)#Gherkin_language][Gherkin]].
+
+All features are defined in this [[https://orgmode.org/][org-mode]] document and exported to feature files
+in the same directory using [[https://orgmode.org/manual/Extracting-source-code.html][tangling]].
+
+* Implemented
+
+** F1
+
+#+BEGIN_SRC feature :tangle ./features/connect_to_car.feature :mkdirp yes
+Feature: Connect to car
+  In order to communicate with my car
+  As a developer
+  I want to connect to my car
+#+END_SRC
+
+** F2
+
+#+BEGIN_SRC feature :tangle ./features/check_cars_supported_commands.feature :mkdirp yes
+Feature: Check cars supported commands
+  In order to avoid sending unsupported commands
+  As a developer
+  I want to check what commands my car supports
+#+END_SRC
+
+** F3
+
+#+BEGIN_SRC feature :tangle ./features/list_available_commands.feature :mkdirp yes
+Feature: List available commands
+  In order to know what commands I can use
+  As a developer
+  I want to list the available commands
+#+END_SRC
+
+** F4
+
+#+BEGIN_SRC feature :tangle ./features/identify_commands.feature :mkdirp yes
+Feature: Identify commands
+  In order to separate commands from each
+  As a developer
+  I want to uniquely identify commands
+#+END_SRC
+
+** F5
+
+#+BEGIN_SRC feature :tangle ./features/command_create.feature :mkdirp yes
+Feature: Create new commands
+  In order to use special manufacturer commands
+  As a developer
+  I want to create new commands
+#+END_SRC
+
+** F6
+
+#+BEGIN_SRC feature :tangle ./features/get_sensor_values.feature :mkdirp yes
+Feature: Get sensor values
+  In order to understand what is going on under the hood
+  As a developer
+  I want to get sensor values from my car
+#+END_SRC
+
+* Wishlist
+
+** F7
+
+#+BEGIN_SRC feature :tangle ./features/get_trouble_codes.feature :mkdirp yes
+Feature: Get trouble codes
+  In order to understand what is wrong with my car
+  As a developer
+  I want to get trouble codes from my car
+#+END_SRC
+
+#+BEGIN_SRC feature :tangle ./features/clear_trouble_codes.feature :mkdirp yes
+Feature: Clear trouble codes
+  In order to turn off the malfunction indicator lamp
+  As a developer
+  I want to clear all trouble codes and stores values
+#+END_SRC

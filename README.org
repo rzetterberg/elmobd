@@ -342,9 +342,8 @@ structure.
 ** Roadmap
 
 The project uses quarterly milestones to plan upcoming changes. The current
-quarter will focus on improving documentation, to see the details of what
-will be done see the milestone
-[2018 Q1](https://github.com/rzetterberg/elmobd/milestone/2).
+quarter will focus on improving documentation. To see the details of what
+will be done see the milestone [[2018 Q1][https://github.com/rzetterberg/elmobd/milestone/2]].
 
 Changes of the library are tracked in the [[file:CHANGELOG.md][CHANGELOG]].
 
