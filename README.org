@@ -34,46 +34,9 @@ of the car.
 
 #+LATEX: \vspace{0.5cm}
 #+LATEX: \begin{center}
-#+NAME: fig:overview
-#+ATTR_HTML: :style max-width: 100%;
-#+BEGIN_SRC dot :file docs/assets/overview.png :exports results :mkdirp yes
-graph {
-  compound=true
-  newrank=true
-  rankdir=LR
-
-  edge [
-    penwidth="0.7" color="#333333" fontname="Fira Code" fontcolor="#333333"
-    fontsize="10"
-  ]
-
-  node [
-    shape="box" fontname="Fira Code" fontcolor="#333333"
-    style="filled" fillcolor="#B3DFB2"
-    margin="0.1"
-  ]
-
-  computer [label="Computer"]
-  elm [label="ELM327"]
-  sae18 [label="SAE J1850"]
-  sae19 [label="SAE J1939"]
-  iso91 [label="ISO 9141-2"]
-  iso14 [label="ISO 14230-4"]
-  iso15 [label="ISO 15765-4"]
-
-  computer -- elm [label="ELM327 commands"]
-  elm -- sae18
-  elm -- sae19
-  elm -- iso91
-  elm -- iso14
-  elm -- iso15
-}
-#+END_SRC
-
 #+ATTR_LATEX: :width 8cm
 #+RESULTS: fig:overview
-[[file:docs/assets/overview.png]]
-
+[[file:docs/assets/overview-diagram.png]]
 #+LATEX: \end{center}
 
 Communicating with the ELM327 is similar to communicating with a web server.
@@ -343,7 +306,7 @@ structure.
 
 The project uses quarterly milestones to plan upcoming changes. The current
 quarter will focus on improving documentation. To see the details of what
-will be done see the milestone [[2018 Q1][https://github.com/rzetterberg/elmobd/milestone/2]].
+will be done see the milestone [[https://github.com/rzetterberg/elmobd/milestone/2%5D%5D][2018 Q1]].
 
 Changes of the library are tracked in the [[file:CHANGELOG.md][CHANGELOG]].
 
