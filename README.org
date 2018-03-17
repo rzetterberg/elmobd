@@ -39,6 +39,11 @@ of the car.
 [[file:docs/assets/overview-diagram.png]]
 #+LATEX: \end{center}
 
+As shown in the diagram above this library connects to a serial device of the
+operating system. The library is not concerned with what is connected to that
+serial device, whether it's a bluetooth USB-dongle with a ELM327 at the other
+end or a ELM327 connected directly via an USB-cable.
+
 Communicating with the ELM327 is similar to communicating with a web server.
 You make a *request* and wait for a *response*. However, in this context we are
 *calling a command* and waiting for *one or more responses*.
