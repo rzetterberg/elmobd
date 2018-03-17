@@ -15,7 +15,7 @@ func main() {
 
 	flag.Parse()
 
-	dev, err := elmobd.NewDevice(*serialPath, false)
+	dev, err := elmobd.NewTestDevice(*serialPath, false)
 
 	if err != nil {
 		fmt.Println("Failed to create new device", err)
@@ -32,7 +32,7 @@ func main() {
 	allCommands := elmobd.GetSensorCommands()
 	carCommands := supported.FilterSupported(allCommands)
 
-	fmt.Printf("%d of %d commands supported:\n", carCommands, allCommands)
+	fmt.Printf("%d of %d commands supported:\n", len(carCommands), len(allCommands))
 
 	for _, cmd := range carCommands {
 		fmt.Printf("- %s supported\n", cmd.Key())

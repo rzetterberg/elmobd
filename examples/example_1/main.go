@@ -15,7 +15,7 @@ func main() {
 
 	flag.Parse()
 
-	dev, err := elmobd.NewDevice(*serialPath, false)
+	dev, err := elmobd.NewTestDevice(*serialPath, false)
 
 	if err != nil {
 		fmt.Println("Failed to create new device", err)

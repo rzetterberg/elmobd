@@ -61,7 +61,7 @@ Let's start by looking at some example of how you use the library.
 
 ** Example usage
 
-Note: these examples are performed on Linux. If you are using another platform
+*Note:* these examples are performed on Linux. If you are using another platform
 there should be minimal changes, but they are not documented yet. Go ahead
 and put a :+1: on issue #11 if you think this should be prioritized.
 
@@ -106,7 +106,7 @@ func main() {
 
 	flag.Parse()
 
-	dev, err := elmobd.NewDevice(*serialPath, false)
+	dev, err := elmobd.NewTestDevice(*serialPath, false)
 
 	if err != nil {
 		fmt.Println("Failed to create new device", err)
@@ -124,8 +124,10 @@ func main() {
 }
 #+END_SRC
 
-When I run this executable on my machine with the ELM327 device plugged in
-I get the following result:
+*Note:* These examples uses the function ~NewTestDevice~, which uses a mocked
+ELM327 device. To use a real ELM327 device, you instead use ~NewDevice~. The
+reason why a mocked device is used is because the examples should be runnable
+without using a real device.
 
 #+BEGIN_EXAMPLE
 $ go run example.go
@@ -170,7 +172,7 @@ func main() {
 
 	flag.Parse()
 
-	dev, err := elmobd.NewDevice(*serialPath, false)
+	dev, err := elmobd.NewTestDevice(*serialPath, false)
 
 	if err != nil {
 		fmt.Println("Failed to create new device", err)
@@ -212,7 +214,7 @@ func main() {
 
 	flag.Parse()
 
-	dev, err := elmobd.NewDevice(*serialPath, false)
+	dev, err := elmobd.NewTestDevice(*serialPath, false)
 
 	if err != nil {
 		fmt.Println("Failed to create new device", err)
@@ -267,7 +269,7 @@ func main() {
 
 	flag.Parse()
 
-	dev, err := elmobd.NewDevice(*serialPath, false)
+	dev, err := elmobd.NewTestDevice(*serialPath, false)
 
 	if err != nil {
 		fmt.Println("Failed to create new device", err)
@@ -284,7 +286,7 @@ func main() {
 	allCommands := elmobd.GetSensorCommands()
 	carCommands := supported.FilterSupported(allCommands)
 
-	fmt.Printf("%d of %d commands supported:\n", carCommands, allCommands)
+	fmt.Printf("%d of %d commands supported:\n", len(carCommands), len(allCommands))
 
 	for _, cmd := range carCommands {
 		fmt.Printf("- %s supported\n", cmd.Key())
@@ -306,7 +308,7 @@ structure.
 
 The project uses quarterly milestones to plan upcoming changes. The current
 quarter will focus on improving documentation. To see the details of what
-will be done see the milestone [[https://github.com/rzetterberg/elmobd/milestone/2%5D%5D][2018 Q1]].
+will be done see the milestone [[https://github.com/rzetterberg/elmobd/milestone/2][2018 Q1]].
 
 Changes of the library are tracked in the [[file:CHANGELOG.md][CHANGELOG]].
 

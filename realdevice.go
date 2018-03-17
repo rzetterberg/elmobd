@@ -13,21 +13,36 @@ import (
  * External
  */
 
-// RawResult represents the raw text output of running a raw command,
+// RealResult represents the raw text output of running a raw command,
 // including information used in debugging to show what input caused what
 // error, how long the command took, etc.
-type RawResult struct {
-	Input     string
-	Outputs   []string
-	Error     error
-	WriteTime time.Duration
-	ReadTime  time.Duration
-	TotalTime time.Duration
+type RealResult struct {
+	input     string
+	outputs   []string
+	error     error
+	writeTime time.Duration
+	readTime  time.Duration
+	totalTime time.Duration
+}
+
+// Failed checks if the result is successful or not
+func (res *RealResult) Failed() bool {
+	return res.error != nil
+}
+
+// GetError returns the results current error
+func (res *RealResult) GetError() error {
+	return res.error
+}
+
+// GetOutputs returns the outputs of the result
+func (res *RealResult) GetOutputs() []string {
+	return res.outputs
 }
 
 // FormatOverview formats a result as an overview of what command was run and
 // how long it took.
-func (debug *RawResult) FormatOverview() string {
+func (res *RealResult) FormatOverview() string {
 	lines := []string{
 		"=======================================",
 		" Ran command \"%s\" in %s",
@@ -38,15 +53,15 @@ func (debug *RawResult) FormatOverview() string {
 
 	return fmt.Sprintf(
 		strings.Join(lines, "\n"),
-		debug.Input,
-		debug.TotalTime,
-		debug.WriteTime,
-		debug.ReadTime,
+		res.input,
+		res.totalTime,
+		res.writeTime,
+		res.readTime,
 	)
 }
 
-// RawDevice represent the low level device connection.
-type RawDevice struct {
+// RealDevice represent the low level serial connection.
+type RealDevice struct {
 	mutex      sync.Mutex
 	state      deviceState
 	input      string
@@ -54,14 +69,14 @@ type RawDevice struct {
 	serialPort *serial.Port
 }
 
-// NewRawDevice creates a new low-level ELM327 device manager by connecting to
+// NewRealDevice creates a new low-level ELM327 device manager by connecting to
 // the device at given path.
 //
 // After a connection has been established the device is reset, and a minimum of
 // 800 ms blocking wait will occur. This makes sure the device does not have
 // any custom settings that could make this library handle the device
 // incorrectly.
-func NewRawDevice(devicePath string) (*RawDevice, error) {
+func NewRealDevice(devicePath string) (*RealDevice, error) {
 	config := &serial.Config{
 		Name:        devicePath,
 		Baud:        38400,
@@ -77,7 +92,7 @@ func NewRawDevice(devicePath string) (*RawDevice, error) {
 		return nil, err
 	}
 
-	dev := &RawDevice{
+	dev := &RealDevice{
 		state:      deviceReady,
 		mutex:      sync.Mutex{},
 		serialPort: port,
@@ -96,7 +111,7 @@ func NewRawDevice(devicePath string) (*RawDevice, error) {
 // makes sure it actually is a ELM327 device we are talking to.
 //
 // In case this doesn't work, you should turn off/on the device.
-func (dev *RawDevice) Reset() error {
+func (dev *RealDevice) Reset() error {
 	var err error
 
 	dev.mutex.Lock()
@@ -150,17 +165,17 @@ out:
 // For more information about AT/OBD commands, see:
 // https://en.wikipedia.org/wiki/Hayes_command_set
 // https://en.wikipedia.org/wiki/OBD-II_PIDs
-func (dev *RawDevice) RunCommand(command string) RawResult {
+func (dev *RealDevice) RunCommand(command string) RawResult {
 	var err error
 	var startTotal time.Time
 	var startRead time.Time
 	var startWrite time.Time
 
-	result := RawResult{
-		Input:     command,
-		WriteTime: 0,
-		ReadTime:  0,
-		TotalTime: 0,
+	result := RealResult{
+		input:     command,
+		writeTime: 0,
+		readTime:  0,
+		totalTime: 0,
 	}
 
 	startTotal = time.Now()
@@ -176,13 +191,13 @@ func (dev *RawDevice) RunCommand(command string) RawResult {
 		goto out
 	}
 
-	result.WriteTime = time.Since(startWrite)
+	result.writeTime = time.Since(startWrite)
 
 	startRead = time.Now()
 
 	err = dev.read()
 
-	result.ReadTime = time.Since(startRead)
+	result.readTime = time.Since(startRead)
 
 	if err != nil {
 		goto out
@@ -197,11 +212,11 @@ out:
 
 	dev.mutex.Unlock()
 
-	result.Error = err
-	result.Outputs = dev.outputs
-	result.TotalTime = time.Since(startTotal)
+	result.error = err
+	result.outputs = dev.outputs
+	result.totalTime = time.Since(startTotal)
 
-	return result
+	return &result
 }
 
 /*==============================================================================
@@ -216,7 +231,7 @@ const (
 	deviceError
 )
 
-func (dev *RawDevice) write(input string) (int, error) {
+func (dev *RealDevice) write(input string) (int, error) {
 	dev.input = ""
 
 	n, err := dev.serialPort.Write(
@@ -230,7 +245,7 @@ func (dev *RawDevice) write(input string) (int, error) {
 	return n, err
 }
 
-func (dev *RawDevice) read() error {
+func (dev *RealDevice) read() error {
 	var buffer bytes.Buffer
 
 	ticker := time.NewTicker(10 * time.Millisecond)
@@ -257,7 +272,7 @@ func (dev *RawDevice) read() error {
 	return dev.processResult(buffer)
 }
 
-func (dev *RawDevice) processResult(result bytes.Buffer) error {
+func (dev *RealDevice) processResult(result bytes.Buffer) error {
 	parts := strings.Split(
 		string(result.Bytes()),
 		"\r",

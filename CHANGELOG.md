@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.3.0] - 2017-01-21
+## [0.3.0] - 2018-01-21
 
 ### Changed
 - Sends expected data lines with each OBD command to speed up communication

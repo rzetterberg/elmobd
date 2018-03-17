@@ -167,27 +167,40 @@ func (res *Result) PayloadAsByte() (byte, error) {
 	return uint8(result), nil
 }
 
+// RawResult represents the raw text output of running a raw command,
+// including information used in debugging to show what input caused what
+// error, how long the command took, etc.
+type RawResult interface {
+	Failed() bool
+	GetError() error
+	GetOutputs() []string
+	FormatOverview() string
+}
+
+// RawDevice represent the low level device, which can either be the real
+// implementation or a mock implementation used for testing.
+type RawDevice interface {
+	RunCommand(string) RawResult
+}
+
 // Device represents the connection to a ELM327 device. This is the data type
 // you use to run commands on the connected ELM327 device, see NewDevice for
 // creating a Device and RunOBDCommand for running commands.
 type Device struct {
-	rawDevice   *RawDevice
+	rawDevice   RawDevice
 	outputDebug bool
 }
 
 // NewDevice constructs a Device by initilizing the serial connection and
 // setting the protocol to talk with the car to "automatic".
 func NewDevice(devicePath string, debug bool) (*Device, error) {
-	rawDev, err := NewRawDevice(devicePath)
+	rawDev, err := NewRealDevice(devicePath)
 
 	if err != nil {
 		return nil, err
 	}
 
-	dev := Device{
-		rawDev,
-		debug,
-	}
+	dev := Device{rawDev, debug}
 
 	err = dev.SetAutomaticProtocol()
 
@@ -198,25 +211,34 @@ func NewDevice(devicePath string, debug bool) (*Device, error) {
 	return &dev, nil
 }
 
+// NewTestDevice constructs a Device which is using a mocked RawDevice.
+func NewTestDevice(devicePath string, debug bool) (*Device, error) {
+	dev := Device{&MockDevice{}, debug}
+
+	return &dev, nil
+}
+
 // SetAutomaticProtocol tells the ELM327 device to automatically discover what
 // protocol to talk to the car with. How the protocol is chhosen is something
 // that the ELM327 does internally. If you're interested in how this works you
 // can look in the data sheet linked in the beginning of the package description.
 func (dev *Device) SetAutomaticProtocol() error {
-	res := dev.rawDevice.RunCommand("ATSP0")
+	rawRes := dev.rawDevice.RunCommand("ATSP0")
 
-	if res.Error != nil {
-		return res.Error
+	if rawRes.Failed() {
+		return rawRes.GetError()
 	}
 
 	if dev.outputDebug {
-		fmt.Println(res.FormatOverview())
+		fmt.Println(rawRes.FormatOverview())
 	}
 
-	if res.Outputs[0] != "OK" {
+	outputs := rawRes.GetOutputs()
+
+	if outputs[0] != "OK" {
 		return fmt.Errorf(
 			"Expected OK response, got: %q",
-			res.Outputs[0],
+			outputs[0],
 		)
 	}
 
@@ -226,17 +248,18 @@ func (dev *Device) SetAutomaticProtocol() error {
 // GetVersion gets the version of the connected ELM327 device. The latest
 // version being v2.2.
 func (dev *Device) GetVersion() (string, error) {
-	res := dev.rawDevice.RunCommand("AT@1")
+	rawRes := dev.rawDevice.RunCommand("AT@1")
 
-	if res.Error != nil {
-		return "", res.Error
+	if rawRes.Failed() {
+		return "", rawRes.GetError()
 	}
 
 	if dev.outputDebug {
-		fmt.Println(res.FormatOverview())
+		fmt.Println(rawRes.FormatOverview())
 	}
 
-	version := res.Outputs[0][:]
+	outputs := rawRes.GetOutputs()
+	version := outputs[0][:]
 
 	return strings.Trim(version, " "), nil
 }
@@ -290,17 +313,17 @@ func (dev *Device) CheckSupportedCommands() (*SupportedCommands, error) {
 
 // CheckSupportedPart checks the availability of a range of 32 commands.
 func (dev *Device) CheckSupportedPart(cmd OBDCommand) (OBDCommand, error) {
-	rawResult := dev.rawDevice.RunCommand(cmd.ToCommand())
+	rawRes := dev.rawDevice.RunCommand(cmd.ToCommand())
 
-	if rawResult.Error != nil {
-		return cmd, rawResult.Error
+	if rawRes.Failed() {
+		return cmd, rawRes.GetError()
 	}
 
 	if dev.outputDebug {
-		fmt.Println(rawResult.FormatOverview())
+		fmt.Println(rawRes.FormatOverview())
 	}
 
-	result, err := parseOBDResponse(cmd, rawResult.Outputs)
+	result, err := parseOBDResponse(cmd, rawRes.GetOutputs())
 
 	if err != nil {
 		return cmd, err
@@ -320,17 +343,17 @@ func (dev *Device) CheckSupportedPart(cmd OBDCommand) (OBDCommand, error) {
 // RunOBDCommand runs the given OBDCommand on the connected ELM327 device and
 // populates the OBDCommand with the parsed output from the device.
 func (dev *Device) RunOBDCommand(cmd OBDCommand) (OBDCommand, error) {
-	rawResult := dev.rawDevice.RunCommand(cmd.ToCommand())
+	rawRes := dev.rawDevice.RunCommand(cmd.ToCommand())
 
-	if rawResult.Error != nil {
-		return cmd, rawResult.Error
+	if rawRes.Failed() {
+		return cmd, rawRes.GetError()
 	}
 
 	if dev.outputDebug {
-		fmt.Println(rawResult.FormatOverview())
+		fmt.Println(rawRes.FormatOverview())
 	}
 
-	result, err := parseOBDResponse(cmd, rawResult.Outputs)
+	result, err := parseOBDResponse(cmd, rawRes.GetOutputs())
 
 	if err != nil {
 		return cmd, err
@@ -352,13 +375,13 @@ func (dev *Device) RunManyOBDCommands(commands []OBDCommand) ([]OBDCommand, erro
 	var result []OBDCommand
 
 	for _, cmd := range commands {
-		res, err := dev.RunOBDCommand(cmd)
+		processed, err := dev.RunOBDCommand(cmd)
 
 		if err != nil {
 			return []OBDCommand{}, err
 		}
 
-		result = append(result, res)
+		result = append(result, processed)
 	}
 
 	return result, nil

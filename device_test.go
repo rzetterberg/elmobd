@@ -1,7 +1,6 @@
 package elmobd
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -40,14 +39,6 @@ func BenchmarkParseOBDResponse2(b *testing.B) {
 /*==============================================================================
  * Tests
  */
-
-func assertEqual(t *testing.T, a interface{}, b interface{}) {
-	if a == b {
-		return
-	}
-
-	t.Fatal(fmt.Sprintf("%v != %v", a, b))
-}
 
 func TestToCommand(t *testing.T) {
 	assertEqual(t, NewPart1Supported().ToCommand(), "01001")
@@ -174,13 +165,6 @@ func TestParseOBDResponse(t *testing.T) {
 	}
 
 	for _, curr := range scenarios {
-		_, err := parseOBDResponse(
-			curr.command,
-			curr.outputs,
-		)
-
-		if err != nil {
-			t.Error("Failed parsing", err)
-		}
+		assertOBDParseSuccess(t, curr.command, curr.outputs)
 	}
 }

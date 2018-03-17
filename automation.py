@@ -95,8 +95,8 @@ def check(args):
     command(['golint'])
 
 def test(args):
-    logger.info('Running unit tests')
-    command(['go', 'test', './...'])
+    logger.info('Running benchmarks, unit tests and examples')
+    command(['go', 'test', '-bench', '.', './...'])
 
     example_files = glob.glob('./examples/**/*.go', recursive=True)
 
