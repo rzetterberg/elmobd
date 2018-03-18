@@ -67,12 +67,23 @@ Feature: Get sensor values
 
 ** F7
 
+#+BEGIN_SRC feature :tangle ./features/check_trouble_codes_amount.feature :mkdirp yes
+Feature: Check trouble codes amount
+  In order to know if there is something wrong with my car
+  As a developer
+  I want to check if there are trouble codes set
+#+END_SRC
+
+** F8
+
 #+BEGIN_SRC feature :tangle ./features/get_trouble_codes.feature :mkdirp yes
 Feature: Get trouble codes
   In order to understand what is wrong with my car
   As a developer
   I want to get trouble codes from my car
 #+END_SRC
+
+** F9
 
 #+BEGIN_SRC feature :tangle ./features/clear_trouble_codes.feature :mkdirp yes
 Feature: Clear trouble codes
