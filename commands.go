@@ -135,6 +135,54 @@ func (cmd *Part1Supported) SetValue(result *Result) error {
 	return nil
 }
 
+// MonitorStatus represents a command that checks the status since DTCs
+// were cleared last time. This includes the MIL status and the amount of
+// DTCs.
+type MonitorStatus struct {
+	BaseCommand
+	MilActive bool
+	DtcAmount byte
+}
+
+// ValueAsLit retrieves the value as a literal representation.
+func (cmd *MonitorStatus) ValueAsLit() string {
+	return fmt.Sprintf(
+		"{\"mil_active\": %t, \"dts_amount\": %d",
+		cmd.MilActive,
+		cmd.DtcAmount,
+	)
+}
+
+// NewMonitorStatus creates a new MonitorStatus.
+func NewMonitorStatus() *MonitorStatus {
+	return &MonitorStatus{
+		BaseCommand{1, 4, "monitor_status"},
+		false,
+		0,
+	}
+}
+
+// SetValue processes the byte array value into the right unsigned
+// integer value.
+func (cmd *MonitorStatus) SetValue(result *Result) error {
+	expAmount := 4
+	payload := result.value[2:]
+	amount := len(payload)
+
+	if amount != expAmount {
+		return fmt.Errorf(
+			"Expected %d bytes of payload, got %d", expAmount, amount,
+		)
+	}
+
+	// 0x80 is the MSB: 0b10000000
+	cmd.MilActive = (payload[0] & 0x80) == 0x80
+	// 0x7F everything but the MSB: 0b01111111
+	cmd.DtcAmount = byte(payload[0] & 0x7F)
+
+	return nil
+}
+
 // EngineLoad represents a command that checks the engine load in percent
 //
 // Min: 0.0

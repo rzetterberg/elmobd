@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.4.0] - 2018-06-23
+
+### Added
+- Command for checking if MIL is on, and amount of DTCs flagged
+
 ## [0.3.0] - 2018-01-21
 
 ### Changed

@@ -33,11 +33,18 @@ func assertSuccess(t *testing.T, err error) {
 	)
 }
 
-func assertOBDParseSuccess(t *testing.T, command OBDCommand, outputs []string) {
-	_, err := parseOBDResponse(
-		command,
-		outputs,
-	)
+func assertOBDParseSuccess(t *testing.T, command OBDCommand, outputs []string) OBDCommand {
+	result, err := parseOBDResponse(command, outputs)
 
 	assertSuccess(t, err)
+
+	err = result.Validate(command)
+
+	assertSuccess(t, err)
+
+	err = command.SetValue(result)
+
+	assertSuccess(t, err)
+
+	return command
 }

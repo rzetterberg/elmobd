@@ -270,31 +270,31 @@ func (dev *Device) GetVersion() (string, error) {
 // Since a single command can only contain 32-bits of information 5 commands
 // are run in series by this function to get the whole 160-bits of information.
 func (dev *Device) CheckSupportedCommands() (*SupportedCommands, error) {
-	part1, err := dev.CheckSupportedPart(NewPart1Supported())
+	part1, err := dev.RunOBDCommand(NewPart1Supported())
 
 	if err != nil {
 		return nil, err
 	}
 
-	part2, err := dev.CheckSupportedPart(NewPart2Supported())
+	part2, err := dev.RunOBDCommand(NewPart2Supported())
 
 	if err != nil {
 		return nil, err
 	}
 
-	part3, err := dev.CheckSupportedPart(NewPart3Supported())
+	part3, err := dev.RunOBDCommand(NewPart3Supported())
 
 	if err != nil {
 		return nil, err
 	}
 
-	part4, err := dev.CheckSupportedPart(NewPart4Supported())
+	part4, err := dev.RunOBDCommand(NewPart4Supported())
 
 	if err != nil {
 		return nil, err
 	}
 
-	part5, err := dev.CheckSupportedPart(NewPart5Supported())
+	part5, err := dev.RunOBDCommand(NewPart5Supported())
 
 	if err != nil {
 		return nil, err
@@ -309,35 +309,6 @@ func (dev *Device) CheckSupportedCommands() (*SupportedCommands, error) {
 	}
 
 	return &result, nil
-}
-
-// CheckSupportedPart checks the availability of a range of 32 commands.
-func (dev *Device) CheckSupportedPart(cmd OBDCommand) (OBDCommand, error) {
-	rawRes := dev.rawDevice.RunCommand(cmd.ToCommand())
-
-	if rawRes.Failed() {
-		return cmd, rawRes.GetError()
-	}
-
-	if dev.outputDebug {
-		fmt.Println(rawRes.FormatOverview())
-	}
-
-	result, err := parseOBDResponse(cmd, rawRes.GetOutputs())
-
-	if err != nil {
-		return cmd, err
-	}
-
-	err = result.Validate(cmd)
-
-	if err != nil {
-		return cmd, err
-	}
-
-	err = cmd.SetValue(result)
-
-	return cmd, err
 }
 
 // RunOBDCommand runs the given OBDCommand on the connected ELM327 device and
