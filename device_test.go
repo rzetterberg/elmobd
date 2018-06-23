@@ -76,6 +76,10 @@ func TestParseOBDResponse(t *testing.T) {
 			[]string{"41 00 02 03 04 05"},
 		},
 		{
+			NewMonitorStatus(),
+			[]string{"41 01 FF 00 00 00"},
+		},
+		{
 			NewEngineLoad(),
 			[]string{"41 04 02"},
 		},

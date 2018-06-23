@@ -63,8 +63,6 @@ Feature: Get sensor values
   I want to get sensor values from my car
 #+END_SRC
 
-* Wishlist
-
 ** F7
 
 #+BEGIN_SRC feature :tangle ./features/check_trouble_codes_amount.feature :mkdirp yes
@@ -74,6 +72,7 @@ Feature: Check trouble codes amount
   I want to check if there are trouble codes set
 #+END_SRC
 
+* Wishlist
 ** F8
 
 #+BEGIN_SRC feature :tangle ./features/get_trouble_codes.feature :mkdirp yes
