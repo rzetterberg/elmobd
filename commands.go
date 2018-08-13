@@ -213,6 +213,36 @@ func (cmd *EngineLoad) SetValue(result *Result) error {
 	return nil
 }
 
+// Fuel represents a command that checks the fuel quantity in percent
+//
+// Min: 0.0
+// Max: 1.0
+type Fuel struct {
+	BaseCommand
+	FloatCommand
+}
+
+// NewFuel creates a new Fuel with the correct parameters.
+func NewFuel() *Fuel {
+	return &Fuel{
+		BaseCommand{0x2f, 1, "fuel"},
+		FloatCommand{},
+	}
+}
+
+// SetValue processes the byte array value into the right float value.
+func (cmd *Fuel) SetValue(result *Result) error {
+	payload, err := result.PayloadAsByte()
+
+	if err != nil {
+		return err
+	}
+
+	cmd.Value = float32(payload) / 255
+
+	return nil
+}
+
 // CoolantTemperature represents a command that checks the engine coolant
 // temperature in Celsius.
 //
