@@ -377,3 +377,4 @@ The library has been used successfully on the following cars:
 | Car                     | Library version | Tester       |
 |-------------------------+-----------------+--------------|
 | Lexus IS200 Manual 2004 |           0.3.0 | @rzetterberg |
+| Ford Ka 2011            |           0.5.0 | @Enrico204   |
