@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.0] - 2018-08-13
+
+### Added
+- Command for retrieving fuel quantity
+
 ## [0.4.0] - 2018-06-23
 
 ### Added

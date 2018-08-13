@@ -84,6 +84,10 @@ func TestParseOBDResponse(t *testing.T) {
 			[]string{"41 04 02"},
 		},
 		{
+			NewFuel(),
+			[]string{"41 2F 10"},
+		},
+		{
 			NewCoolantTemperature(),
 			[]string{"41 05 FF"},
 		},
