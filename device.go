@@ -269,44 +269,48 @@ func (dev *Device) GetVersion() (string, error) {
 //
 // Since a single command can only contain 32-bits of information 5 commands
 // are run in series by this function to get the whole 160-bits of information.
+//
+// Returns error if the first command (PID 1 to 20) fails, the rest of the 5
+// commands are ignored if they fail.
 func (dev *Device) CheckSupportedCommands() (*SupportedCommands, error) {
-	part1, err := dev.RunOBDCommand(NewPart1Supported())
+	partRes, err := dev.RunOBDCommand(NewPart1Supported())
+	part1 := uint32(0)
 
 	if err != nil {
 		return nil, err
 	}
 
-	part2, err := dev.RunOBDCommand(NewPart2Supported())
+	part1 = uint32(partRes.(*Part1Supported).Value)
 
-	if err != nil {
-		return nil, err
+	partRes, err = dev.RunOBDCommand(NewPart2Supported())
+	part2 := uint32(0)
+
+	if err == nil {
+		part2 = uint32(partRes.(*Part2Supported).Value)
 	}
 
-	part3, err := dev.RunOBDCommand(NewPart3Supported())
+	partRes, err = dev.RunOBDCommand(NewPart3Supported())
+	part3 := uint32(0)
 
-	if err != nil {
-		return nil, err
+	if err == nil {
+		part3 = uint32(partRes.(*Part3Supported).Value)
 	}
 
-	part4, err := dev.RunOBDCommand(NewPart4Supported())
+	partRes, err = dev.RunOBDCommand(NewPart4Supported())
+	part4 := uint32(0)
 
-	if err != nil {
-		return nil, err
+	if err == nil {
+		part4 = uint32(partRes.(*Part4Supported).Value)
 	}
 
-	part5, err := dev.RunOBDCommand(NewPart5Supported())
+	partRes, err = dev.RunOBDCommand(NewPart5Supported())
+	part5 := uint32(0)
 
-	if err != nil {
-		return nil, err
+	if err == nil {
+		part5 = uint32(partRes.(*Part5Supported).Value)
 	}
 
-	result := SupportedCommands{
-		uint32(part1.(*Part1Supported).Value),
-		uint32(part2.(*Part2Supported).Value),
-		uint32(part3.(*Part3Supported).Value),
-		uint32(part4.(*Part4Supported).Value),
-		uint32(part5.(*Part5Supported).Value),
-	}
+	result := SupportedCommands{part1, part2, part3, part4, part5}
 
 	return &result, nil
 }

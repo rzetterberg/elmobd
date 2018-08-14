@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.1] - 2018-08-15
+
+### Changed
+- `CheckSupportedCommands` now ignores parts after part 1 that fails
+
 ## [0.5.0] - 2018-08-13
 
 ### Added

@@ -5,7 +5,7 @@ let
 in
   with pkgs; stdenv.mkDerivation rec {
     name    = "elmobd-${version}";
-    version = builtins.readFile ./VERSION;
+    version = builtins.replaceStrings ["\n"] [""] (builtins.readFile ./VERSION);
 
     buildInputs = [
       go
