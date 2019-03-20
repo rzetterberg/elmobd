@@ -122,6 +122,10 @@ func mockMode1Outputs(subcmd string) []string {
 		return []string{
 			"41 0D 4B",
 		}
+	} else if strings.HasPrefix(subcmd, "31") {
+		return []string{
+			"41 31 02 0C",
+		}
 	}
 
 	return []string{"NOT SUPPORTED"}

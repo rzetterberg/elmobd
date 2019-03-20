@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.0] - 2019-03-20
+
+### Fixed 
+- issue #18 - commands expect one byte as response - mocked device returned three bytes
+
+### Added
+- `NewDistSinceDTCClear` command (0x31) - distance since last DTC clear
+- mocked responses for Fuel (0x2F), Speed (0x0D)
+
 ## [0.5.1] - 2018-08-15
 
 ### Changed

@@ -44,6 +44,7 @@ func TestToCommand(t *testing.T) {
 	assertEqual(t, NewPart1Supported().ToCommand(), "01001")
 	assertEqual(t, NewEngineLoad().ToCommand(), "01041")
 	assertEqual(t, NewVehicleSpeed().ToCommand(), "010D1")
+	assertEqual(t, NewDistSinceDTCClear().ToCommand(), "01311")
 }
 
 func TestIsSupported(t *testing.T) {
@@ -169,6 +170,10 @@ func TestParseOBDResponse(t *testing.T) {
 				"SEARCHING...",
 				"41 00 01 02 03 04",
 			},
+		},
+		{
+			NewDistSinceDTCClear(),
+			[]string{"41 31 02 33"},
 		},
 	}
 
