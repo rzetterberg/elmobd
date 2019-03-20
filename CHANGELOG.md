@@ -4,6 +4,7 @@
 
 ### Fixed 
 - issue #18 - commands expect one byte as response - mocked device returned three bytes
+- device identyfication issue - some device identified itself in second line of response 
 
 ### Added
 - `NewDistSinceDTCClear` command (0x31) - distance since last DTC clear
