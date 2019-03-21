@@ -15,7 +15,7 @@
 #+end_src
 
 #+RESULTS: version_output
-- Version :: 0.5.1
+- Version :: 0.6.0
 
 Go library for communicating with cars [[https://en.wikipedia.org/wiki/On-board_diagnostics][OBD-II]] system using [[https://www.elmelectronics.com/ic/elm327/][ELM327]] based
 USB-devices.
@@ -374,7 +374,8 @@ The library has been built and tested on the following platforms:
 
 The library has been used successfully on the following cars:
 
-| Car                     | Library version | Tester       |
-|-------------------------+-----------------+--------------|
-| Lexus IS200 Manual 2004 |           0.3.0 | @rzetterberg |
-| Ford Ka 2011            |           0.5.0 | @Enrico204   |
+| Car                       | Library version | Tester       |
+|---------------------------+-----------------+--------------|
+| Lexus IS200 Manual 2004   |           0.3.0 | @rzetterberg |
+| Ford Ka 2011              |           0.5.0 | @Enrico204   |
+| Ford Transit Automat 2019 |			0.6.0 | @mikspec	 |

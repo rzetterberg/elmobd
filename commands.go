@@ -243,6 +243,36 @@ func (cmd *Fuel) SetValue(result *Result) error {
 	return nil
 }
 
+// DistSinceDTCClear represents a command that checks distance since last DTC clear
+//
+// Min: 0
+// Max: 65535
+type DistSinceDTCClear struct {
+	BaseCommand
+	UIntCommand
+}
+
+// NewDistSinceDTCClear creates a new commend distance since DTC clear with the correct parameters.
+func NewDistSinceDTCClear() *DistSinceDTCClear {
+	return &DistSinceDTCClear{
+		BaseCommand{0x31, 2, "dist_since_dtc_clean"},
+		UIntCommand{},
+	}
+}
+
+// SetValue processes the byte array value into the right uint value.
+func (cmd *DistSinceDTCClear) SetValue(result *Result) error {
+	payload, err := result.PayloadAsUInt16()
+
+	if err != nil {
+		return err
+	}
+
+	cmd.Value = uint32(payload)
+
+	return nil
+}
+
 // CoolantTemperature represents a command that checks the engine coolant
 // temperature in Celsius.
 //

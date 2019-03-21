@@ -3,10 +3,11 @@ package elmobd
 import (
 	"bytes"
 	"fmt"
-	"github.com/tarm/serial"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/tarm/serial"
 )
 
 /*==============================================================================
@@ -135,10 +136,15 @@ func (dev *RealDevice) Reset() error {
 		goto out
 	}
 
-	if !strings.HasPrefix(dev.outputs[0], "ELM327") {
+	// Device can identified itself in first or second line
+	if !(strings.HasPrefix(dev.outputs[0], "ELM327") || (len(dev.outputs) > 1 && strings.HasPrefix(dev.outputs[1], "ELM327"))) {
+		output := dev.outputs[0]
+		if len(dev.outputs) > 1 {
+			output += " " + dev.outputs[1]
+		}
 		err = fmt.Errorf(
 			"Device did not identify itself as ELM327: %s",
-			dev.outputs[0],
+			output,
 		)
 	}
 out:
