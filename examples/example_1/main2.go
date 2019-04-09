@@ -22,7 +22,7 @@ func main() {
 		return
 	}
 
-	version, err := dev.GetVersion()
+	version, err := dev.CheckSupportedCommands()
 
 	if err != nil {
 		fmt.Println("Failed to get version", err)

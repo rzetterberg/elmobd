@@ -183,6 +183,50 @@ func (cmd *MonitorStatus) SetValue(result *Result) error {
 	return nil
 }
 
+// FreezeFrame represents a command that checks the DTC that caused required 
+// freeze frame data storage
+// 
+// Min 0x0000
+// Max 0xFFFF
+type FreezeFrame struct {
+	BaseCommand
+	FrameData string
+}
+
+// NewFreezeFrame creates a new command that contains DTC freeze frame stored data
+func NewFreezeFrame() *FreezeFrame {
+	return &FreezeFrame{
+		BaseCommand{2, 2, "freeze_frame"},
+		"0000",	
+	}
+
+}
+
+// SetValue processes the byte array value into the right unsigned integer
+// value.
+func (cmd *FreezeFrame) SetValue(result *Result) error {
+	expAmount := 2
+	payload := result.value[2:]
+	amount := len(payload)
+
+	if amount != expAmount {
+		return fmt.Errorf(
+			"Expected %d bytes of payload, got %d", expAmount, amount,
+		)
+	}
+	
+	cmd.FrameData = string(payload[:])
+	
+	return nil
+}
+
+// ValueAsLit retrieves the value as a literal representation.
+func (cmd *FreezeFrame) ValueAsLit() string {
+	return fmt.Sprintf(
+		"Freeze frame data: %X", cmd.FrameData,
+	)
+}
+
 // EngineLoad represents a command that checks the engine load in percent
 //
 // Min: 0.0

@@ -22,12 +22,14 @@ func main() {
 		return
 	}
 
-	version, err := dev.GetVersion()
+	cmd, err := dev.RunOBDCommand(elmobd.NewFreezeFrame())
 
 	if err != nil {
-		fmt.Println("Failed to get version", err)
+		fmt.Println("Failed to get freeze frame data", err)
 		return
 	}
+	
+	status := cmd.(*elmobd.FreezeFrame)
 
-	fmt.Println("Device has version", version)
+	fmt.Printf("Freeze frame data: %X\n", status.FrameData)
 }

@@ -134,6 +134,17 @@ func (res *Result) PayloadAsUInt64() (uint64, error) {
 	return uint64(result), nil
 }
 
+// PayloadAsUInt322 is a helper for getting payload as uint32.
+func (res *Result) PayloadAsUInt322() (uint32, error) {
+	result, err := res.payloadAsUInt(2)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return uint32(result), nil
+}
+
 // PayloadAsUInt32 is a helper for getting payload as uint32.
 func (res *Result) PayloadAsUInt32() (uint32, error) {
 	result, err := res.payloadAsUInt(4)
