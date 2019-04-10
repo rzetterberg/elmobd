@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/wkarasz/elmobd"
+	"github.com/rzetterberg/elmobd"
 )
 
 func main() {
