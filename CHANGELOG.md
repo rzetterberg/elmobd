@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.7.0] - 2019-04-10
+
+### Added
+- `NewFreezeFrame` command ($01 PID 2) - DTC that caused the required freeze frame data storage
+- mocked responses for FreezeFrame
+
 ## [0.6.0] - 2019-03-20
 
 ### Fixed 
