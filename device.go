@@ -202,6 +202,25 @@ type Device struct {
 	outputDebug bool
 }
 
+// WJK DirectDeviceCommand constructs a Device by initializing the serial connection and 
+// setting the protocol to talk with the car to "automatic".
+func (dev *Device) DirectDeviceCommand(directCmd string) (string, error) {
+	rawRes := dev.rawDevice.RunCommand(directCmd)
+	
+	if rawRes.Failed() {
+                return "", rawRes.GetError()
+        }
+
+	if dev.outputDebug {
+		fmt.Println(rawRes.FormatOverview())
+	}
+
+        outputs := rawRes.GetOutputs()
+	output := outputs[0][:]	
+        return strings.Trim(output, " "), nil
+}
+ 
+
 // NewDevice constructs a Device by initilizing the serial connection and
 // setting the protocol to talk with the car to "automatic".
 func NewDevice(devicePath string, debug bool) (*Device, error) {

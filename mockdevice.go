@@ -103,8 +103,12 @@ func mockMode1Outputs(subcmd string) []string {
 			"41 01 FF 00 00 00",
 		}
 	} else if strings.HasPrefix(subcmd, "02") {
-		return[]string{
+		return []string{
 			"41 02 00 00",
+		}
+	} else if strings.HasPrefix(subcmd, "03") {
+		return []string{
+			"41 03 11",
 		}
 	} else if strings.HasPrefix(subcmd, "05") {
 		return []string{

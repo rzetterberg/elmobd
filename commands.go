@@ -227,6 +227,48 @@ func (cmd *FreezeFrame) ValueAsLit() string {
 	)
 }
 
+// FuelSystemStatus represents a command that reports the fuel system status
+type FuelSystemStatus struct {
+	BaseCommand
+	FuelSystem1 string
+	FuelSystem2 string
+}
+
+// New FuelSystemStatus
+func NewFuelSystemStatus() *FuelSystemStatus {
+	return &FuelSystemStatus{
+		BaseCommand{3, 2, "fuel_system_status"},
+		"0",
+		"0",
+	}
+}
+
+// SetValue processes the byte array value in the right values
+func (cmd *FuelSystemStatus) SetValue(result *Result) error {
+	expAmount := 2
+	payload := result.value[2:]
+	amount := len(payload)
+
+	if amount != expAmount {
+		return fmt.Errorf(
+			"Expected %d bytes of payload, got %d", expAmount, amount,
+		)
+	}
+
+	cmd.FuelSystem1 = string(payload[1])
+	cmd.FuelSystem2 = string(payload[2])
+	return nil
+}
+
+// ValueAsLit retrieves the value as a literal representation
+func (cmd *FuelSystemStatus) ValueAsLit() string {
+	return fmt.Sprintf(
+		"Fuel System 1: %b, Fuel System 2: %b",
+		cmd.FuelSystem1,
+		cmd.FuelSystem2,
+	)
+}
+
 // EngineLoad represents a command that checks the engine load in percent
 //
 // Min: 0.0
