@@ -134,17 +134,6 @@ func (res *Result) PayloadAsUInt64() (uint64, error) {
 	return uint64(result), nil
 }
 
-// PayloadAsUInt322 is a helper for getting payload as uint32.
-func (res *Result) PayloadAsUInt322() (uint32, error) {
-	result, err := res.payloadAsUInt(2)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return uint32(result), nil
-}
-
 // PayloadAsUInt32 is a helper for getting payload as uint32.
 func (res *Result) PayloadAsUInt32() (uint32, error) {
 	result, err := res.payloadAsUInt(4)
@@ -201,25 +190,6 @@ type Device struct {
 	rawDevice   RawDevice
 	outputDebug bool
 }
-
-// WJK DirectDeviceCommand constructs a Device by initializing the serial connection and 
-// setting the protocol to talk with the car to "automatic".
-func (dev *Device) DirectDeviceCommand(directCmd string) (string, error) {
-	rawRes := dev.rawDevice.RunCommand(directCmd)
-	
-	if rawRes.Failed() {
-                return "", rawRes.GetError()
-        }
-
-	if dev.outputDebug {
-		fmt.Println(rawRes.FormatOverview())
-	}
-
-        outputs := rawRes.GetOutputs()
-	output := outputs[0][:]	
-        return strings.Trim(output, " "), nil
-}
- 
 
 // NewDevice constructs a Device by initilizing the serial connection and
 // setting the protocol to talk with the car to "automatic".

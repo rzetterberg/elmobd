@@ -3,6 +3,7 @@ package elmobd
 import (
 	"fmt"
 	"math"
+	"strings"
 )
 
 /*==============================================================================
@@ -101,6 +102,23 @@ type UIntCommand struct {
 // ValueAsLit retrieves the value as a literal representation.
 func (cmd *UIntCommand) ValueAsLit() string {
 	return fmt.Sprintf("%d", cmd.Value)
+}
+
+// DirectDeviceCommand executes the raw command passed to the ELM chipset 
+func (dev *Device) DirectDeviceCommand(directCmd string) (string, error) {
+        rawRes := dev.rawDevice.RunCommand(directCmd)
+
+        if rawRes.Failed() {
+                return "", rawRes.GetError()
+        }
+
+        if dev.outputDebug {
+                fmt.Println(rawRes.FormatOverview())
+        }
+
+        outputs := rawRes.GetOutputs()
+        output := outputs[0][:]
+        return strings.Trim(output, " "), nil
 }
 
 /*==============================================================================

@@ -17,7 +17,7 @@ func TestMonitorStatusResult(t *testing.T) {
 	assert(t, command.DtcAmount == 127, "DTCs were not 127")
 }
 
-/*
+/* TODO fix test assert
 func TestFreezeFrameResult(t *testing.T) {
 	command := NewFreezeFrame()
 	outputs := []string{"41 02 00 00"}

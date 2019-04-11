@@ -15,7 +15,7 @@
 #+end_src
 
 #+RESULTS: version_output
-- Version :: 0.6.0
+- Version :: 0.7.0
 
 Go library for communicating with cars [[https://en.wikipedia.org/wiki/On-board_diagnostics][OBD-II]] system using [[https://www.elmelectronics.com/ic/elm327/][ELM327]] based
 USB-devices.
