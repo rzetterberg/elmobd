@@ -281,7 +281,7 @@ func (cmd *FuelSystemStatus) SetValue(result *Result) error {
 // ValueAsLit retrieves the value as a literal representation
 func (cmd *FuelSystemStatus) ValueAsLit() string {
 	return fmt.Sprintf(
-		"Fuel System 1: %b, Fuel System 2: %b",
+		"Fuel System 1: %X, Fuel System 2: %X",
 		cmd.FuelSystem1,
 		cmd.FuelSystem2,
 	)
@@ -329,7 +329,7 @@ type Fuel struct {
 // NewFuel creates a new Fuel with the correct parameters.
 func NewFuel() *Fuel {
 	return &Fuel{
-		BaseCommand{0x2f, 1, "fuel"},
+		BaseCommand{47, 1, "fuel"},
 		FloatCommand{},
 	}
 }
