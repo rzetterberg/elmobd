@@ -264,55 +264,34 @@ func (dev *Device) GetVersion() (string, error) {
 	return strings.Trim(version, " "), nil
 }
 
-// CheckSupportedCommands check which commands are supported (PID 1 to PID 160)
-// by the car connected to the ELM327 device.
-//
-// Since a single command can only contain 32-bits of information 5 commands
-// are run in series by this function to get the whole 160-bits of information.
-//
-// Returns error if the first command (PID 1 to 20) fails, the rest of the 5
-// commands are ignored if they fail.
+// CheckSupportedCommands check which commands are supported by the car connected
+// to the ELM327 device.
 func (dev *Device) CheckSupportedCommands() (*SupportedCommands, error) {
-	partRes, err := dev.RunOBDCommand(NewPart1Supported())
-	part1 := uint32(0)
-
-	if err != nil {
-		return nil, err
+	result := &SupportedCommands{
+		[]*PartSupported{},
 	}
 
-	part1 = uint32(partRes.(*Part1Supported).Value)
+	index := byte(1)
 
-	partRes, err = dev.RunOBDCommand(NewPart2Supported())
-	part2 := uint32(0)
+	for {
+		part := NewPartSupported(index)
 
-	if err == nil {
-		part2 = uint32(partRes.(*Part2Supported).Value)
+		partRes, err := dev.RunOBDCommand(part)
+
+		if err != nil {
+			return nil, err
+		}
+
+		result.AddPart(partRes.(*PartSupported))
+
+		// Check if the car supports the PID that checks if the next part of PIDs
+		// are supported
+		if !part.SupportsNextPart() {
+			break
+		}
 	}
 
-	partRes, err = dev.RunOBDCommand(NewPart3Supported())
-	part3 := uint32(0)
-
-	if err == nil {
-		part3 = uint32(partRes.(*Part3Supported).Value)
-	}
-
-	partRes, err = dev.RunOBDCommand(NewPart4Supported())
-	part4 := uint32(0)
-
-	if err == nil {
-		part4 = uint32(partRes.(*Part4Supported).Value)
-	}
-
-	partRes, err = dev.RunOBDCommand(NewPart5Supported())
-	part5 := uint32(0)
-
-	if err == nil {
-		part5 = uint32(partRes.(*Part5Supported).Value)
-	}
-
-	result := SupportedCommands{part1, part2, part3, part4, part5}
-
-	return &result, nil
+	return result, nil
 }
 
 // RunOBDCommand runs the given OBDCommand on the connected ELM327 device and
@@ -366,11 +345,56 @@ func (dev *Device) RunManyOBDCommands(commands []OBDCommand) ([]OBDCommand, erro
 // (PID 1 to PID 160) that are supported by the car connected to the ELM327
 // device.
 type SupportedCommands struct {
-	part1 uint32
-	part2 uint32
-	part3 uint32
-	part4 uint32
-	part5 uint32
+	parts []*PartSupported
+}
+
+// NewSupportedCommands creates a new PartSupported.
+func NewSupportedCommands(partValues []uint32) (*SupportedCommands, error) {
+	parts := []*PartSupported{}
+	index := byte(1)
+
+	for _, val := range partValues {
+		part := NewPartSupported(index)
+
+		part.SetRawValue(val)
+
+		parts = append(parts, part)
+
+		index++
+	}
+
+	return &SupportedCommands{parts}, nil
+}
+
+// AddPart adds the given part to the slice of parts checked.
+func (sc *SupportedCommands) AddPart(part *PartSupported) {
+	sc.parts = append(sc.parts, part)
+}
+
+// GetPart gets the part at the given index.
+func (sc *SupportedCommands) GetPart(index byte) (*PartSupported, error) {
+	partsAmount := len(sc.parts)
+
+	if partsAmount == 0 {
+		return nil, fmt.Errorf("Cannot get part by index %d, as there are no parts", index)
+	}
+
+	if index >= byte(partsAmount) {
+		return nil, fmt.Errorf("Cannot get part by index %d, there are only %d parts", index, partsAmount)
+	}
+
+	return sc.parts[index], nil
+}
+
+// GetPartByPID gets the part at the given index.
+func (sc *SupportedCommands) GetPartByPID(pid OBDParameterID) (*PartSupported, error) {
+	if pid == 0 {
+		return sc.GetPart(0)
+	}
+
+	index := byte((pid - 1) / 0x20)
+
+	return sc.GetPart(index)
 }
 
 // IsSupported checks if the given OBDCommand is supported.
@@ -382,15 +406,13 @@ func (sc *SupportedCommands) IsSupported(cmd OBDCommand) bool {
 	}
 
 	pid := cmd.ParameterID()
+	part, err := sc.GetPartByPID(pid)
 
-	inPart1 := (sc.part1 >> uint32(32-pid)) & 1
-	inPart2 := (sc.part2 >> uint32(32-pid)) & 1
-	inPart3 := (sc.part3 >> uint32(32-pid)) & 1
-	inPart4 := (sc.part4 >> uint32(32-pid)) & 1
-	inPart5 := (sc.part5 >> uint32(32-pid)) & 1
+	if err != nil {
+		return false
+	}
 
-	return (inPart1 == 1) || (inPart2 == 1) ||
-		(inPart3 == 1) || (inPart4 == 1) || (inPart5 == 1)
+	return part.SupportsPID(pid)
 }
 
 // FilterSupported filters out the OBDCommands that are supported.

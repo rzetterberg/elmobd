@@ -90,13 +90,19 @@ def check(args):
     logger.info('Checking quality of project')
 
     command(['go', 'fmt'])
-    command(['go', 'tool', 'vet', '--all', '.'])
+    command(['go', 'vet'])
     command(['go', 'build', '-v', './...'])
     command(['golint'])
 
 def test(args):
     logger.info('Running benchmarks, unit tests and examples')
-    command(['go', 'test', '-bench', '.', './...'])
+
+    cmd = ['go', 'test']
+
+    if args.bench:
+        cmd = cmd + ['-bench', '.', './...']
+
+    command(cmd)
 
     example_files = glob.glob('./examples/**/*.go', recursive=True)
 
@@ -117,17 +123,19 @@ if __name__ == '__main__':
         help='Controls the log level, "info" is default'
     )
 
-    check_parser = subparsers.add_parser(
-        'check',
-    )
-
+    check_parser = subparsers.add_parser('check')
     check_parser.set_defaults(func=check)
 
-    test_parser = subparsers.add_parser(
-        'test',
+    test_parser = subparsers.add_parser('test')
+
+    test_parser.add_argument(
+        '--bench',
+        dest='bench',
+        action='store_true',
+        help='Controls whether to run benchmark or not'
     )
 
-    test_parser.set_defaults(func=test)
+    test_parser.set_defaults(bench=False, func=test)
 
     args = parser.parse_args()
 

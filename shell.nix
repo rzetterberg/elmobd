@@ -7,8 +7,11 @@ in
     name    = "elmobd-${version}";
     version = builtins.replaceStrings ["\n"] [""] (builtins.readFile ./VERSION);
 
+    # go get golang.org/x/tools/cmd/cover
+
     buildInputs = [
       go
+      golint
       python3
     ];
   }
