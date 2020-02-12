@@ -98,3 +98,16 @@ func TestPartSupportedSupportsCommand(t *testing.T) {
 		assertEqual(t, part.SupportsPID(pid), false)
 	}
 }
+
+func TestService01Command(t *testing.T) {
+	service01cmd := &Part1Supported{
+		BaseCommand{SERVICE_01_ID, 0, 4, "supported_commands_part1"},
+		UIntCommand{},
+	}
+	assert(t, service01cmd.ModeID() == SERVICE_01_ID, "Service id is not "+string(SERVICE_01_ID))
+}
+
+func TestService04Command(t *testing.T) {
+	command := NewClearTroubleCodes()
+	assert(t, command.ModeID() == SERVICE_04_ID, "Service id is not "+string(SERVICE_04_ID))
+}
