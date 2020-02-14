@@ -890,10 +890,14 @@ type ClearTroubleCodes struct {
 	UIntCommand
 }
 
+func NewService04Command(parameterID byte, dataWidth byte, key string) BaseCommand {
+	return BaseCommand{SERVICE_04_ID, parameterID, dataWidth, key}
+}
+
 // NewClearTroubleCodes creates a new ClearTroubleCodes with the right parameters..
 func NewClearTroubleCodes() *ClearTroubleCodes {
 	return &ClearTroubleCodes{
-		BaseCommand{SERVICE_04_ID, 0, 0, "clear_trouble_codes"},
+		NewService04Command(0, 0, "clear_trouble_codes"),
 		UIntCommand{},
 	}
 }
