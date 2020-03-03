@@ -63,11 +63,13 @@ func (res *RealResult) FormatOverview() string {
 
 // RealDevice represent the low level serial connection.
 type RealDevice struct {
-	mutex      sync.Mutex
-	state      deviceState
-	input      string
-	outputs    []string
-	serialPort *serial.Port
+	mutex                   sync.Mutex
+	state                   deviceState
+	input                   string
+	outputs                 []string
+	serialPort              *serial.Port
+	retryReadTickerDuration time.Duration
+	retryAttempts           int8
 }
 
 // NewRealDevice creates a new low-level ELM327 device manager by connecting to
@@ -81,7 +83,7 @@ func NewRealDevice(devicePath string) (*RealDevice, error) {
 	config := &serial.Config{
 		Name:        devicePath,
 		Baud:        38400,
-		ReadTimeout: time.Second * 5,
+		ReadTimeout: time.Second * 20,
 		Size:        8,
 		Parity:      serial.ParityNone,
 		StopBits:    serial.Stop1,
@@ -94,9 +96,11 @@ func NewRealDevice(devicePath string) (*RealDevice, error) {
 	}
 
 	dev := &RealDevice{
-		state:      deviceReady,
-		mutex:      sync.Mutex{},
-		serialPort: port,
+		state:                   deviceReady,
+		mutex:                   sync.Mutex{},
+		serialPort:              port,
+		retryAttempts:           5,
+		retryReadTickerDuration: time.Millisecond * 100,
 	}
 
 	err = dev.Reset()
@@ -160,6 +164,23 @@ out:
 	return err
 }
 
+func (dev *RealDevice) increaseRetryTickerTime() {
+	dev.retryReadTickerDuration += 5 * time.Second
+	dev.retryAttempts--
+}
+
+func (dev *RealDevice) shouldRetry() bool {
+	if dev.retryAttempts <= 0 {
+		return false
+	}
+	for _, out := range dev.outputs {
+		if strings.HasPrefix(out, "UNABLE TO CONNECT") {
+			return true
+		}
+	}
+	return false
+}
+
 // RunCommand runs the given AT/OBD command by sending it to the device and
 // waiting for the output. There are no restrictions on what commands you can
 // run with this function, so be careful.
@@ -184,24 +205,37 @@ func (dev *RealDevice) RunCommand(command string) RawResult {
 		totalTime: 0,
 	}
 
-	startTotal = time.Now()
+	for {
 
-	dev.mutex.Lock()
-	dev.state = deviceBusy
+		startTotal = time.Now()
 
-	startWrite = time.Now()
+		dev.mutex.Lock()
+		dev.state = deviceBusy
 
-	_, err = dev.write(command)
+		startWrite = time.Now()
 
-	if err != nil {
-		goto out
+		_, err = dev.write(command)
+
+		if err != nil {
+			goto out
+		}
+
+		result.writeTime = time.Since(startWrite)
+
+		startRead = time.Now()
+
+		err = dev.read()
+
+		if dev.shouldRetry() {
+			dev.increaseRetryTickerTime()
+			//dev.serialPort.Flush()
+			//dev.outputs = []string{}
+			dev.mutex.Unlock()
+			dev.Reset()
+		} else {
+			break
+		}
 	}
-
-	result.writeTime = time.Since(startWrite)
-
-	startRead = time.Now()
-
-	err = dev.read()
 
 	result.readTime = time.Since(startRead)
 
@@ -254,7 +288,7 @@ func (dev *RealDevice) write(input string) (int, error) {
 func (dev *RealDevice) read() error {
 	var buffer bytes.Buffer
 
-	ticker := time.NewTicker(10 * time.Millisecond)
+	ticker := time.NewTicker(dev.retryReadTickerDuration)
 
 	for range ticker.C {
 		tmp := make([]byte, 128)
