@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.6.1] - 2020-03-03
+### Fixed 
+- Some slow obd-ii interfaces seems to timeout with a "UNABLE TO CONNECT" answer. Retrying after 5 seconds seems to fix the problem
+
 ## [0.6.0] - 2019-03-20
 
 ### Fixed 
