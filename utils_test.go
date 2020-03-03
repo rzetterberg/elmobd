@@ -38,13 +38,15 @@ func assertOBDParseSuccess(t *testing.T, command OBDCommand, outputs []string) O
 
 	assertSuccess(t, err)
 
-	err = result.Validate(command)
+	if result != nil {
+		err = result.Validate(command)
 
-	assertSuccess(t, err)
+		assertSuccess(t, err)
 
-	err = command.SetValue(result)
+		err = command.SetValue(result)
 
-	assertSuccess(t, err)
+		assertSuccess(t, err)
+	}
 
 	return command
 }

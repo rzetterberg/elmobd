@@ -36,6 +36,10 @@ type BaseCommand struct {
 	key         string
 }
 
+// ResultLessCommand is a command implementing empty functions for setting values (commands without results)
+type ResultLessCommand struct {
+}
+
 // ModeID retrieves the mode ID of the command.
 func (cmd *BaseCommand) ModeID() byte {
 	return cmd.modeId
@@ -887,7 +891,14 @@ func (cmd *RuntimeSinceStart) SetValue(result *Result) error {
 
 type ClearTroubleCodes struct {
 	BaseCommand
-	UIntCommand
+	ResultLessCommand
+}
+
+func (cmd *ResultLessCommand) SetValue(result *Result) error {
+	return nil
+}
+func (cmd *ResultLessCommand) ValueAsLit() string {
+	return ""
 }
 
 func NewService04Command(parameterID byte, dataWidth byte, key string) BaseCommand {
@@ -898,7 +909,7 @@ func NewService04Command(parameterID byte, dataWidth byte, key string) BaseComma
 func NewClearTroubleCodes() *ClearTroubleCodes {
 	return &ClearTroubleCodes{
 		NewService04Command(0, 0, "clear_trouble_codes"),
-		UIntCommand{},
+		ResultLessCommand{},
 	}
 }
 

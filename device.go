@@ -311,6 +311,10 @@ func (dev *Device) RunOBDCommand(cmd OBDCommand) (OBDCommand, error) {
 
 	if err != nil {
 		return cmd, err
+	} else {
+		if result == nil {
+			return cmd, nil
+		}
 	}
 
 	err = result.Validate(cmd)
@@ -474,10 +478,7 @@ func parseOBDResponse(cmd OBDCommand, outputs []string) (*Result, error) {
 	}
 
 	if payload == "" {
-		return nil, fmt.Errorf(
-			"Empty payload parsed from outputs: %s",
-			outputs,
-		)
+		return nil, nil
 	}
 
 	return NewResult(payload)

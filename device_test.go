@@ -387,6 +387,10 @@ func TestParseOBDResponse(t *testing.T) {
 			NewDistSinceDTCClear(),
 			[]string{"41 31 02 33"},
 		},
+		{
+			NewClearTroubleCodes(),
+			nil,
+		},
 	}
 
 	for _, curr := range scenarios {
