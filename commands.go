@@ -27,7 +27,7 @@ type OBDCommand interface {
 // BaseCommand is a simple struct with the 3 members that all OBDCommands
 // will have in common.
 type BaseCommand struct {
-	parameterID byte
+	parameterID OBDParameterID
 	dataWidth   byte
 	key         string
 }
@@ -107,32 +107,173 @@ func (cmd *UIntCommand) ValueAsLit() string {
  * Specific types
  */
 
-// Part1Supported represents a command that checks the supported PIDs 0 to 20
-type Part1Supported struct {
+// PartSupported represents a command that checks which 31 PIDs are supported
+// of a part.
+//
+// All PIDs are divided into parts 7 parts with the following PIDs:
+//
+// - Part 1 (0x00): 0x01 to 0x20
+// - Part 2 (0x20): 0x21 to 0x40
+// - Part 3 (0x40): 0x41 to 0x60
+// - Part 4 (0x60): 0x61 to 0x80
+// - Part 5 (0x80): 0x81 to 0xA0
+// - Part 6 (0xA0): 0xA1 to 0xC0
+// - Part 7 (0xC0): 0xC1 to 0xE0
+//
+// PID 0x00 checks which PIDs that are supported of part 1, after that, the
+// last PID of each part checks the supportedness of the next part.
+//
+// So PID 0x20 of Part 1 checks which PIDs in part 2 are supported, PID 0x40 of
+// part 2 checks which PIDs in part 3 are supported, etc etc.
+type PartSupported struct {
 	BaseCommand
 	UIntCommand
+	index byte
 }
 
-// NewPart1Supported creates a new Part1Supported.
-func NewPart1Supported() *Part1Supported {
-	return &Part1Supported{
-		BaseCommand{0, 4, "supported_commands_part1"},
+// PartRange represents how many PIDs there are in one part
+const PartRange = 0x20
+
+// NewPartSupported creates a new PartSupported.
+func NewPartSupported(index byte) *PartSupported {
+	if index < 1 {
+		index = 1
+	} else if index > 7 {
+		index = 7
+	}
+
+	pid := OBDParameterID((index - 1) * PartRange)
+
+	return &PartSupported{
+		BaseCommand{pid, 4, fmt.Sprintf("supported_commands_part%d", index)},
 		UIntCommand{},
+		index,
 	}
 }
 
 // SetValue processes the byte array value into the right unsigned
 // integer value.
-func (cmd *Part1Supported) SetValue(result *Result) error {
+func (part *PartSupported) SetValue(result *Result) error {
 	payload, err := result.PayloadAsUInt32()
 
 	if err != nil {
 		return err
 	}
 
-	cmd.Value = uint32(payload)
+	part.Value = uint32(payload)
 
 	return nil
+}
+
+// SetRawValue sets the raw value directly without any validation or parsing.
+func (part *PartSupported) SetRawValue(val uint32) {
+	part.Value = val
+}
+
+// PIDInRange checks if the given is in range of the current part.
+//
+// For example, if the current part is 1 (0x01 to 0x20) and the given command
+// has a PID of 0x10, then this function returns true.
+//
+// If the given command has a PID of 0x31 then this function returns false.
+func (part *PartSupported) PIDInRange(comparePID OBDParameterID) bool {
+	endPID := OBDParameterID(part.index * PartRange)
+	startPID := OBDParameterID(endPID-PartRange) + 1
+
+	return startPID <= comparePID && comparePID <= endPID
+}
+
+// CommandInRange checks if the PID of the given command is in range of the
+// current part.
+//
+// For example, if the current part is 1 (0x01 to 0x20) and the given command
+// has a PID of 0x10, then this function returns true.
+//
+// If the given command has a PID of 0x31 then this function returns false.
+func (part *PartSupported) CommandInRange(cmd OBDCommand) bool {
+	return part.PIDInRange(cmd.ParameterID())
+}
+
+// SupportsPID checks if the given command is supported in the current part.
+//
+// To figure out if a PID is supported we need to understand what the Value
+// of a PartSupported represents.
+//
+// It represents the supported/not supported state of 32 PIDs.
+//
+// It does this by encoding this information as 32 bits, where each bit
+// represents the state of a PID:
+//
+// - When the bit is set, it represents the PID being supported
+// - When the bit is unset, it represents the PID being unsupported
+//
+// To make it easier to map PID values to actual bits, Bit-Encoded-Notation
+// is used, where each bit has a name. Each name as a letter representing
+// the byte and a number representing the bit in the byte.
+//
+// Here's how Bit-Encoded-Notation maps against the bits:
+//
+// A7    A0 B7    B0 C7    C0 D7     D0
+// |      | |      | |      | |      |
+// v      v v      v v      v v      v
+// 00000000 00000000 00000000 00000000
+//
+// The state of the first PID is kept at bit A7, the second PID at A6, all
+// the way until we get to PID 0x20 (32) which is kept in bit D0.
+//
+// In order to check if a bit is active, we can either:
+//
+// - Shift the bits of the value to the right until the bit we want to check
+//   has the position D0 and then use a AND bitwise conditional with the mask 0x1
+// - Shift the bits of the mask 0x1 to the left until it has the same position as
+//   the bit we want to check and then use a AND bitwise conditional with value
+//
+// This function uses the first method of checking if the bit is active.
+//
+// In order to figure out which bit position has, we take the position of the
+// first PID, which is 32 and subtract the PID number to get the bit position.
+// This means that 32 - PID 1 = 31 (A7) and 32 - PID 32 = 0 (D0).
+//
+// Now we know how to figure out what bit holds the information and how to read
+// the information from the bit.
+//
+// This works well for checking if part 1 supported PIDs between 0x1 and 0x20,
+// but it fails for parts 2,3,4,5,6,7 and PIDs about 0x20.
+//
+// In order to make this work for other parts besides 1, we simply normalize the
+// PID number by removing 32 times the part index, instead of hardcoding the value
+// to subtract to 32.
+func (part *PartSupported) SupportsPID(comparePID OBDParameterID) bool {
+	if !part.PIDInRange(comparePID) {
+		return false
+	}
+
+	offset := uint32(32 * part.index)
+	bitsToShift := offset - uint32(comparePID)
+	result := (part.Value >> bitsToShift) & 1
+
+	return result == 1
+}
+
+// SupportsNextPart checks if the PID that is used to check the next part is
+// supported. This PID is always the last PID of the current part, which means
+// we can simply check if the D0 bit is set.
+func (part *PartSupported) SupportsNextPart() bool {
+	result := part.Value & 1
+
+	return result == 1
+}
+
+// SupportsCommand checks if the given command is supported in the current part.
+//
+// Note: returns false if the given PID is not handled in the current part
+func (part *PartSupported) SupportsCommand(cmd OBDCommand) bool {
+	return part.SupportsPID(cmd.ParameterID())
+}
+
+// Index returns the part index.
+func (part *PartSupported) Index() byte {
+	return part.index
 }
 
 // MonitorStatus represents a command that checks the status since DTCs
@@ -730,118 +871,6 @@ func NewRuntimeSinceStart() *RuntimeSinceStart {
 // value.
 func (cmd *RuntimeSinceStart) SetValue(result *Result) error {
 	payload, err := result.PayloadAsUInt16()
-
-	if err != nil {
-		return err
-	}
-
-	cmd.Value = uint32(payload)
-
-	return nil
-}
-
-// Part2Supported represents a command that checks the supported PIDs 21 to 40.
-type Part2Supported struct {
-	BaseCommand
-	UIntCommand
-}
-
-// NewPart2Supported creates a new Part2Supported with the right parameters.
-func NewPart2Supported() *Part2Supported {
-	return &Part2Supported{
-		BaseCommand{32, 4, "supported_commands_part2"},
-		UIntCommand{},
-	}
-}
-
-// SetValue processes the byte array value into the right unsigned integer
-// value.
-func (cmd *Part2Supported) SetValue(result *Result) error {
-	payload, err := result.PayloadAsUInt32()
-
-	if err != nil {
-		return err
-	}
-
-	cmd.Value = uint32(payload)
-
-	return nil
-}
-
-// Part3Supported represents a command that checks the supported PIDs 41 to 60.
-type Part3Supported struct {
-	BaseCommand
-	UIntCommand
-}
-
-// NewPart3Supported creates a new Part3Supported with the right parameters.
-func NewPart3Supported() *Part3Supported {
-	return &Part3Supported{
-		BaseCommand{64, 4, "supported_commands_part3"},
-		UIntCommand{},
-	}
-}
-
-// SetValue processes the byte array value into the right unsigned integer
-// value.
-func (cmd *Part3Supported) SetValue(result *Result) error {
-	payload, err := result.PayloadAsUInt32()
-
-	if err != nil {
-		return err
-	}
-
-	cmd.Value = uint32(payload)
-
-	return nil
-}
-
-// Part4Supported represents a command that checks the supported PIDs 61 to 80.
-type Part4Supported struct {
-	BaseCommand
-	UIntCommand
-}
-
-// NewPart4Supported creates a new Part4Supported with the right parameters.
-func NewPart4Supported() *Part4Supported {
-	return &Part4Supported{
-		BaseCommand{96, 4, "supported_commands_part4"},
-		UIntCommand{},
-	}
-}
-
-// SetValue processes the byte array value into the right unsigned integer
-// value.
-func (cmd *Part4Supported) SetValue(result *Result) error {
-	payload, err := result.PayloadAsUInt32()
-
-	if err != nil {
-		return err
-	}
-
-	cmd.Value = uint32(payload)
-
-	return nil
-}
-
-// Part5Supported represents a command that checks the supported PIDs 81 to A0.
-type Part5Supported struct {
-	BaseCommand
-	UIntCommand
-}
-
-// NewPart5Supported creates a new Part5Supported with the right parameters..
-func NewPart5Supported() *Part5Supported {
-	return &Part5Supported{
-		BaseCommand{128, 4, "supported_commands_part5"},
-		UIntCommand{},
-	}
-}
-
-// SetValue processes the byte array value into the right unsigned integer
-// value.
-func (cmd *Part5Supported) SetValue(result *Result) error {
-	payload, err := result.PayloadAsUInt32()
 
 	if err != nil {
 		return err

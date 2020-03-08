@@ -1,14 +1,22 @@
 # Changelog
 
+## [0.7.0] - 2020-02-23
+
+### Changed
+- Commands `Part1Supported`, `Part2Supported`, `Part3Supported` are now deprecated by the generic command `PartSupported`
+
+### Fixed
+- Issue #27 - ISSupported function in device.go incorrect for PID's outside part 1
+
 ## [0.6.0] - 2019-03-20
 
-### Fixed 
-- issue #18 - commands expect one byte as response - mocked device returned three bytes
-- device identyfication issue - some device identified itself in second line of response 
+### Fixed
+- Issue #18 - commands expect one byte as response - mocked device returned three bytes
+- Device identyfication issue - some device identified itself in second line of response
 
 ### Added
 - `NewDistSinceDTCClear` command (0x31) - distance since last DTC clear
-- mocked responses for Fuel (0x2F), Speed (0x0D)
+- Mocked responses for Fuel (0x2F), Speed (0x0D)
 
 ## [0.5.1] - 2018-08-15
 

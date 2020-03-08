@@ -2,6 +2,7 @@ language: go
 go:
   - 1.9
 script:
-  - go tool vet --all .
+  - go fmt
+  - go vet
   - go build -v ./...
-  - go test ./...
+  - go test -bench . ./...
