@@ -4,6 +4,5 @@ go:
 script:
   - go fmt
   - go vet
-  - golint
   - go build -v ./...
   - go test -bench . ./...
