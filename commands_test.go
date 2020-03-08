@@ -100,10 +100,7 @@ func TestPartSupportedSupportsCommand(t *testing.T) {
 }
 
 func TestService01Command(t *testing.T) {
-	service01cmd := &Part1Supported{
-		BaseCommand{SERVICE_01_ID, 0, 4, "supported_commands_part1"},
-		UIntCommand{},
-	}
+	service01cmd := NewPart1Supported()
 	assert(t, service01cmd.ModeID() == SERVICE_01_ID, "Service id is not "+string(SERVICE_01_ID))
 }
 
