@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.8.0] - 2020-03-09
+### Added
+- clear codes supported (MIL)
+
 ## [0.7.0] - 2020-02-23
 
 ### Changed

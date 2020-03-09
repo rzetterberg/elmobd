@@ -125,7 +125,7 @@ func TestGetPartByPID(t *testing.T) {
 }
 
 type DummyCommand struct {
-	BaseCommand
+	baseCommand
 }
 
 func (cmd *DummyCommand) ValueAsLit() string {
@@ -162,7 +162,7 @@ func TestIsSupportedWikipediaExample(t *testing.T) {
 
 	for _, pid := range supported {
 		cmd := &DummyCommand{
-			BaseCommand{pid, 1, "dummy"},
+			baseCommand{SERVICE_01_ID, pid, 1, "dummy"},
 		}
 
 		assertEqual(t, sc.IsSupported(cmd), true)
@@ -170,7 +170,7 @@ func TestIsSupportedWikipediaExample(t *testing.T) {
 
 	for _, pid := range unsupported {
 		cmd := &DummyCommand{
-			BaseCommand{pid, 1, "dummy"},
+			baseCommand{SERVICE_01_ID, pid, 1, "dummy"},
 		}
 
 		assertEqual(t, sc.IsSupported(cmd), false)
@@ -277,7 +277,7 @@ func TestIssue27Regression(t *testing.T) {
 
 	for _, pid := range supported {
 		cmd := &DummyCommand{
-			BaseCommand{pid, 1, "dummy"},
+			baseCommand{SERVICE_01_ID, pid, 1, "dummy"},
 		}
 
 		assertEqual(t, sc.IsSupported(cmd), true)
@@ -386,6 +386,10 @@ func TestParseOBDResponse(t *testing.T) {
 		{
 			NewDistSinceDTCClear(),
 			[]string{"41 31 02 33"},
+		},
+		{
+			NewClearTroubleCodes(),
+			nil,
 		},
 	}
 
