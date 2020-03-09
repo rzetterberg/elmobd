@@ -134,7 +134,7 @@ func (cmd *UIntCommand) ValueAsLit() string {
 // So PID 0x20 of Part 1 checks which PIDs in part 2 are supported, PID 0x40 of
 // part 2 checks which PIDs in part 3 are supported, etc etc.
 type PartSupported struct {
-	BaseCommand
+	baseCommand
 	UIntCommand
 	index byte
 }
@@ -153,7 +153,7 @@ func NewPartSupported(index byte) *PartSupported {
 	pid := OBDParameterID((index - 1) * PartRange)
 
 	return &PartSupported{
-		BaseCommand{pid, 4, fmt.Sprintf("supported_commands_part%d", index)},
+		baseCommand{SERVICE_01_ID, pid, 4, fmt.Sprintf("supported_commands_part%d", index)},
 		UIntCommand{},
 		index,
 	}
