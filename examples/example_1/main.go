@@ -36,4 +36,12 @@ func main() {
 	}
 
 	fmt.Println("Device has version", version)
+
+	voltage, err := dev.GetVoltage()
+	if err != nil {
+		fmt.Println("Failed to get version", err)
+		return
+	}
+
+	fmt.Printf("Device has voltage %f V\n", voltage)
 }

@@ -276,6 +276,29 @@ func (dev *Device) GetVersion() (string, error) {
 	return strings.Trim(version, " "), nil
 }
 
+// GetVoltage gets the current battery voltage of the vehicle as measured
+// by the ELM327 device.
+func (dev *Device) GetVoltage() (float32, error) {
+	rawRes := dev.rawDevice.RunCommand("AT RV")
+
+	if rawRes.Failed() {
+		return -1, rawRes.GetError()
+	}
+
+	if dev.outputDebug {
+		fmt.Println(rawRes.FormatOverview())
+	}
+
+	output := rawRes.GetOutputs()[0]
+	voltage, err := strconv.ParseFloat(output[:len(output)-1], 32)
+
+	if err != nil {
+		return -1, fmt.Errorf("voltage is not a floating point number: %w", err)
+	}
+
+	return float32(voltage), nil
+}
+
 // CheckSupportedCommands check which commands are supported by the car connected
 // to the ELM327 device.
 func (dev *Device) CheckSupportedCommands() (*SupportedCommands, error) {
