@@ -211,8 +211,8 @@ func NewDevice(addr string, debug bool) (*Device, error) {
 	switch u.Scheme {
 	case "serial":
 		dev.rawDevice, err = NewSerialDevice(u)
-	case "tcp":
-		dev.rawDevice, err = NewTCPDevice(u)
+	case "tcp", "tcp4", "tcp6", "unix":
+		dev.rawDevice, err = NewNetDevice(u)
 	case "test":
 		dev.rawDevice, err = &MockDevice{}, nil
 	}

@@ -133,16 +133,28 @@ func NewSerialDevice(addr *url.URL) (*RealDevice, error) {
 	return dev, nil
 }
 
-type tcpConn struct {
+type netConn struct {
 	net.Conn
 }
 
-func (t *tcpConn) Flush() error {
+func (t *netConn) Flush() error {
 	return nil
 }
 
-func NewTCPDevice(addr *url.URL) (*RealDevice, error) {
-	conn, err := net.Dial("tcp", addr.Host)
+func NewNetDevice(u *url.URL) (*RealDevice, error) {
+	var network = u.Scheme
+	var address string
+
+	switch network {
+	case "tcp", "tcp4", "tcp6":
+		address = u.Host
+
+	case "unix":
+		address = u.Opaque
+	}
+
+	conn, err := net.Dial(network, address)
+
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +162,7 @@ func NewTCPDevice(addr *url.URL) (*RealDevice, error) {
 	dev := &RealDevice{
 		state: deviceReady,
 		mutex: sync.Mutex{},
-		conn:  &tcpConn{conn},
+		conn:  &netConn{conn},
 	}
 
 	err = dev.Reset()
