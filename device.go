@@ -2,6 +2,8 @@ package elmobd
 
 import (
 	"fmt"
+	"net/url"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -193,27 +195,37 @@ type Device struct {
 
 // NewDevice constructs a Device by initilizing the serial connection and
 // setting the protocol to talk with the car to "automatic".
-func NewDevice(devicePath string, debug bool) (*Device, error) {
-	rawDev, err := NewRealDevice(devicePath)
+func NewDevice(addr string, debug bool) (*Device, error) {
+	// If addr is an existing file/device we use it as a serial device
+	if _, err := os.Stat(addr); err == nil {
+		addr = fmt.Sprintf("serial://%s", addr)
+	}
+
+	u, err := url.Parse(addr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse device address: %w", err)
+	}
+
+	dev := Device{outputDebug: debug}
+
+	switch u.Scheme {
+	case "serial":
+		dev.rawDevice, err = NewSerialDevice(u)
+	case "tcp":
+		dev.rawDevice, err = NewTCPDevice(u)
+	case "test":
+		dev.rawDevice, err = &MockDevice{}, nil
+	}
 
 	if err != nil {
 		return nil, err
 	}
-
-	dev := Device{rawDev, debug}
 
 	err = dev.SetAutomaticProtocol()
 
 	if err != nil {
 		return nil, err
 	}
-
-	return &dev, nil
-}
-
-// NewTestDevice constructs a Device which is using a mocked RawDevice.
-func NewTestDevice(devicePath string, debug bool) (*Device, error) {
-	dev := Device{&MockDevice{}, debug}
 
 	return &dev, nil
 }
