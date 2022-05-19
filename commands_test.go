@@ -106,5 +106,5 @@ func TestService01Command(t *testing.T) {
 
 func TestService04Command(t *testing.T) {
 	command := NewClearTroubleCodes()
-	assert(t, command.ModeID() == SERVICE_04_ID, "Service id is not "+string(SERVICE_04_ID))
+	assert(t, command.ModeID() == SERVICE_04_ID, fmt.Sprintf("Service id is not %d", SERVICE_04_ID))
 }
