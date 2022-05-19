@@ -3,6 +3,10 @@ package elmobd
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"net"
+	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -90,6 +94,22 @@ func NewSerialDevice(addr *url.URL) (*RealDevice, error) {
 		Size:        8,
 		Parity:      serial.ParityNone,
 		StopBits:    serial.Stop1,
+	}
+
+	q := addr.Query()
+	baudStr := q.Get("baudrate")
+	timeoutStr := q.Get("timeout")
+
+	if baudStr != "" {
+		if baud, err := strconv.Atoi(baudStr); err == nil {
+			config.Baud = baud
+		}
+	}
+
+	if timeoutStr != "" {
+		if to, err := time.ParseDuration(timeoutStr); err == nil {
+			config.ReadTimeout = to
+		}
 	}
 
 	port, err := serial.OpenPort(config)
