@@ -278,17 +278,17 @@ func (dev *Device) CheckSupportedCommands() (*SupportedCommands, error) {
 
 		partRes, err := dev.RunOBDCommand(part)
 
-		if err != nil {
-			return nil, err
+		if err == nil {
+			result.AddPart(partRes.(*PartSupported))
+
+			// Check if the car supports the PID that checks if the next part of PIDs
+			// are supported
+			if !part.SupportsNextPart() {
+				break
+			}
 		}
 
-		result.AddPart(partRes.(*PartSupported))
-
-		// Check if the car supports the PID that checks if the next part of PIDs
-		// are supported
-		if !part.SupportsNextPart() {
-			break
-		}
+		index++
 	}
 
 	return result, nil
