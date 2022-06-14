@@ -307,7 +307,7 @@ func (dev *RealDevice) processResult(result bytes.Buffer) error {
 	}
 
 	if len(trimmedParts) < 1 {
-		return fmt.Errorf("No payload receieved")
+		return fmt.Errorf("No payload received")
 	}
 
 	dev.outputs = trimmedParts
