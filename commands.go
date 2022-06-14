@@ -936,3 +936,122 @@ var sensorCommands = []OBDCommand{
 func GetSensorCommands() []OBDCommand {
 	return sensorCommands
 }
+
+// Control module voltage
+type ControlModuleVoltage struct {
+	baseCommand
+	FloatCommand
+}
+
+// NewThrottlePosition creates a new ThrottlePosition with the right parameters.
+func NewControlModuleVoltage() *ControlModuleVoltage {
+	return &ControlModuleVoltage{
+		baseCommand{SERVICE_01_ID, 0x42, 2, "control_module_voltage"},
+		FloatCommand{},
+	}
+}
+
+// SetValue processes the byte array value into the right float value.
+func (cmd *ControlModuleVoltage) SetValue(result *Result) error {
+	payload, err := result.PayloadAsUInt16()
+
+	if err != nil {
+		return err
+	}
+
+	cmd.Value = float32(payload) / 1000
+
+	return nil
+}
+
+// AmbientTemperature represents a command that checks the engine coolant
+// temperature in Celsius.
+//
+// Min: -40
+// Max: 215
+type AmbientTemperature struct {
+	baseCommand
+	IntCommand
+}
+
+// NewCoolantTemperature creates a new CoolantTemperature with the right
+// parameters.
+func NewAmbientTemperature() *AmbientTemperature {
+	return &AmbientTemperature{
+		baseCommand{SERVICE_01_ID, 0x46, 1, "ambient_temperature"},
+		IntCommand{},
+	}
+}
+
+// SetValue processes the byte array value into the right integer value.
+func (cmd *AmbientTemperature) SetValue(result *Result) error {
+	payload, err := result.PayloadAsByte()
+
+	if err != nil {
+		return err
+	}
+
+	cmd.Value = int(payload) - 40
+
+	return nil
+}
+
+// EngineOilTemperature represents a command that checks the engine oil
+// temperature in Celsius.
+//
+// Min: -40
+// Max: 215
+type EngineOilTemperature struct {
+	baseCommand
+	IntCommand
+}
+
+// NewCoolantTemperature creates a new CoolantTemperature with the right
+// parameters.
+func NewEngineOilTemperature() *EngineOilTemperature {
+	return &EngineOilTemperature{
+		baseCommand{SERVICE_01_ID, 0x5c, 1, "engine_oil_temperature"},
+		IntCommand{},
+	}
+}
+
+// SetValue processes the byte array value into the right integer value.
+func (cmd *EngineOilTemperature) SetValue(result *Result) error {
+	payload, err := result.PayloadAsByte()
+
+	if err != nil {
+		return err
+	}
+
+	cmd.Value = int(payload) - 40
+
+	return nil
+}
+
+// AbsoluteBarometricPressure
+type AbsoluteBarometricPressure struct {
+	baseCommand
+	IntCommand
+}
+
+// NewCoolantTemperature creates a new CoolantTemperature with the right
+// parameters.
+func NewAbsoluteBarometricPressure() *AbsoluteBarometricPressure {
+	return &AbsoluteBarometricPressure{
+		baseCommand{SERVICE_01_ID, 0x33, 1, "absolute_barometric_pressure"},
+		IntCommand{},
+	}
+}
+
+// SetValue processes the byte array value into the right integer value.
+func (cmd *AbsoluteBarometricPressure) SetValue(result *Result) error {
+	payload, err := result.PayloadAsByte()
+
+	if err != nil {
+		return err
+	}
+
+	cmd.Value = int(payload)
+
+	return nil
+}
