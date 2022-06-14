@@ -3,6 +3,10 @@ package elmobd
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"net"
+	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -61,30 +65,51 @@ func (res *RealResult) FormatOverview() string {
 	)
 }
 
-// RealDevice represent the low level serial connection.
-type RealDevice struct {
-	mutex      sync.Mutex
-	state      deviceState
-	input      string
-	outputs    []string
-	serialPort *serial.Port
+type Conn interface {
+	io.ReadWriteCloser
+	Flush() error
 }
 
-// NewRealDevice creates a new low-level ELM327 device manager by connecting to
+// RealDevice represent the low level serial connection.
+type RealDevice struct {
+	mutex   sync.Mutex
+	state   deviceState
+	input   string
+	outputs []string
+	conn    Conn
+}
+
+// NewSerialDevice creates a new low-level ELM327 device manager by connecting to
 // the device at given path.
 //
 // After a connection has been established the device is reset, and a minimum of
 // 800 ms blocking wait will occur. This makes sure the device does not have
 // any custom settings that could make this library handle the device
 // incorrectly.
-func NewRealDevice(devicePath string) (*RealDevice, error) {
+func NewSerialDevice(addr *url.URL) (*RealDevice, error) {
 	config := &serial.Config{
-		Name:        devicePath,
+		Name:        addr.Path,
 		Baud:        38400,
 		ReadTimeout: time.Second * 5,
 		Size:        8,
 		Parity:      serial.ParityNone,
 		StopBits:    serial.Stop1,
+	}
+
+	q := addr.Query()
+	baudStr := q.Get("baudrate")
+	timeoutStr := q.Get("timeout")
+
+	if baudStr != "" {
+		if baud, err := strconv.Atoi(baudStr); err == nil {
+			config.Baud = baud
+		}
+	}
+
+	if timeoutStr != "" {
+		if to, err := time.ParseDuration(timeoutStr); err == nil {
+			config.ReadTimeout = to
+		}
 	}
 
 	port, err := serial.OpenPort(config)
@@ -94,9 +119,50 @@ func NewRealDevice(devicePath string) (*RealDevice, error) {
 	}
 
 	dev := &RealDevice{
-		state:      deviceReady,
-		mutex:      sync.Mutex{},
-		serialPort: port,
+		state: deviceReady,
+		mutex: sync.Mutex{},
+		conn:  port,
+	}
+
+	err = dev.Reset()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return dev, nil
+}
+
+type netConn struct {
+	net.Conn
+}
+
+func (t *netConn) Flush() error {
+	return nil
+}
+
+func NewNetDevice(u *url.URL) (*RealDevice, error) {
+	var network = u.Scheme
+	var address string
+
+	switch network {
+	case "tcp", "tcp4", "tcp6":
+		address = u.Host
+
+	case "unix":
+		address = u.Opaque
+	}
+
+	conn, err := net.Dial(network, address)
+
+	if err != nil {
+		return nil, err
+	}
+
+	dev := &RealDevice{
+		state: deviceReady,
+		mutex: sync.Mutex{},
+		conn:  &netConn{conn},
 	}
 
 	err = dev.Reset()
@@ -118,7 +184,7 @@ func (dev *RealDevice) Reset() error {
 	dev.mutex.Lock()
 	dev.state = deviceBusy
 
-	err = dev.serialPort.Flush()
+	err = dev.conn.Flush()
 
 	if err != nil {
 		goto out
@@ -149,7 +215,7 @@ func (dev *RealDevice) Reset() error {
 	}
 out:
 	if err != nil {
-		dev.serialPort.Flush()
+		dev.conn.Flush()
 		dev.state = deviceError
 	} else {
 		dev.state = deviceReady
@@ -210,7 +276,7 @@ func (dev *RealDevice) RunCommand(command string) RawResult {
 	}
 out:
 	if err != nil {
-		dev.serialPort.Flush()
+		dev.conn.Flush()
 		dev.state = deviceError
 	} else {
 		dev.state = deviceReady
@@ -240,7 +306,7 @@ const (
 func (dev *RealDevice) write(input string) (int, error) {
 	dev.input = ""
 
-	n, err := dev.serialPort.Write(
+	n, err := dev.conn.Write(
 		[]byte(input + "\r\n"),
 	)
 
@@ -258,7 +324,7 @@ func (dev *RealDevice) read() error {
 
 	for range ticker.C {
 		tmp := make([]byte, 128)
-		n, err := dev.serialPort.Read(tmp)
+		n, err := dev.conn.Read(tmp)
 
 		if err != nil {
 			dev.outputs = []string{}

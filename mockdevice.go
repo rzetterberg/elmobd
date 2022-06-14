@@ -136,6 +136,8 @@ func mockOutputs(cmd string) []string {
 		return []string{"OK"}
 	} else if cmd == "AT@1" {
 		return []string{"OBDII by elm329@gmail.com"}
+	} else if cmd == "AT RV" {
+		return []string{"12.1234"}
 	} else if strings.HasPrefix(cmd, "01") {
 		return mockMode1Outputs(cmd[2:])
 	}
