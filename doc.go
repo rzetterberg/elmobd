@@ -30,7 +30,7 @@
 //
 // The Device type represents an active connection with an ELM327 device. You
 // plug in your device into your computer, get the path to the device and
-// initlize a new device:
+// initialize a new device:
 //
 //     package main
 //

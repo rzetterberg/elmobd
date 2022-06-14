@@ -129,7 +129,7 @@ func (cmd *UIntCommand) ValueAsLit() string {
 // - Part 7 (0xC0): 0xC1 to 0xE0
 //
 // PID 0x00 checks which PIDs that are supported of part 1, after that, the
-// last PID of each part checks the supportedness of the next part.
+// last PID of each part checks the whether the next part is supported.
 //
 // So PID 0x20 of Part 1 checks which PIDs in part 2 are supported, PID 0x40 of
 // part 2 checks which PIDs in part 3 are supported, etc etc.
@@ -249,7 +249,7 @@ func (part *PartSupported) CommandInRange(cmd OBDCommand) bool {
 // but it fails for parts 2,3,4,5,6,7 and PIDs about 0x20.
 //
 // In order to make this work for other parts besides 1, we simply normalize the
-// PID number by removing 32 times the part index, instead of hardcoding the value
+// PID number by removing 32 times the part index, instead of hard coding the value
 // to subtract to 32.
 func (part *PartSupported) SupportsPID(comparePID OBDParameterID) bool {
 	if !part.PIDInRange(comparePID) {

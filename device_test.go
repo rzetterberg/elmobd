@@ -184,8 +184,8 @@ func TestIsSupportedWikipediaExample(t *testing.T) {
 // each part has the first and last bit active, and all other bits inactive.
 //
 // This means that the first PID of the part should be supported, as well as
-// the last PID, which is the one you use to check the supportedness of PIDs of
-// the next part.
+// the last PID, which is the one you use to check which PIDs of
+// the next part are supported.
 //
 // Source: https://github.com/rzetterberg/elmobd/issues/27
 func TestIssue27Regression(t *testing.T) {

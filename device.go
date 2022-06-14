@@ -29,7 +29,7 @@ type Result struct {
 	value []byte
 }
 
-// NewResult constructrs a Result by taking care of parsing the hex bytes into
+// NewResult constructors a Result by taking care of parsing the hex bytes into
 // binary representation.
 func NewResult(rawLine string) (*Result, error) {
 	literals := strings.Split(rawLine, " ")
@@ -96,11 +96,11 @@ func (res *Result) Validate(cmd OBDCommand) error {
 	return nil
 }
 
-// payloadAsUInt casts the Result as a unisgned 64-bit integer and making sure
+// payloadAsUInt casts the Result as a unsigned 64-bit integer and making sure
 // it has the expected amount of bytes.
 //
 // This function is used by other more specific utility functions that cast the
-// result to a specific unsigned integer typer.
+// result to a specific unsigned integer type.
 //
 // By verifying the amount of bytes in the result using this function we can
 // safely cast the resulting uint64 into types with less bits.
@@ -193,7 +193,7 @@ type Device struct {
 	outputDebug bool
 }
 
-// NewDevice constructs a Device by initilizing the serial connection and
+// NewDevice constructs a Device by initializing the serial connection and
 // setting the protocol to talk with the car to "automatic".
 func NewDevice(addr string, debug bool) (*Device, error) {
 	// If addr is an existing file/device we use it as a serial device
@@ -231,7 +231,7 @@ func NewDevice(addr string, debug bool) (*Device, error) {
 }
 
 // SetAutomaticProtocol tells the ELM327 device to automatically discover what
-// protocol to talk to the car with. How the protocol is chhosen is something
+// protocol to talk to the car with. How the protocol is chosen is something
 // that the ELM327 does internally. If you're interested in how this works you
 // can look in the data sheet linked in the beginning of the package description.
 func (dev *Device) SetAutomaticProtocol() error {
@@ -488,7 +488,7 @@ func (sc *SupportedCommands) FilterSupported(commands []OBDCommand) []OBDCommand
 // This means that this function cannot handle multiline responses
 // (such as getting the VIN number, and multiple PID requests baked into one).
 // Handling these more advanced responses is something that is going to be
-// implemented, but right now has been deprioritized.
+// implemented, but right now has been de-prioritized.
 func parseOBDResponse(cmd OBDCommand, outputs []string) (*Result, error) {
 	payload := ""
 
