@@ -299,6 +299,30 @@ func (dev *Device) GetVoltage() (float32, error) {
 	return float32(voltage), nil
 }
 
+// GetIgnitionState retrieves the current state of the cars ignition
+func (dev *Device) GetIgnitionState() (bool, error) {
+	rawRes := dev.rawDevice.RunCommand("ATIGN")
+
+	if rawRes.Failed() {
+		return false, rawRes.GetError()
+	}
+
+	if dev.outputDebug {
+		fmt.Println(rawRes.FormatOverview())
+	}
+
+	output := rawRes.GetOutputs()[0]
+
+	switch output {
+	case "ON":
+		return true, nil
+	case "OFF":
+		return false, nil
+	default:
+		return false, fmt.Errorf("failed to parse response: %s", output)
+	}
+}
+
 // CheckSupportedCommands check which commands are supported by the car connected
 // to the ELM327 device.
 func (dev *Device) CheckSupportedCommands() (*SupportedCommands, error) {
