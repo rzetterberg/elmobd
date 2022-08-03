@@ -431,7 +431,7 @@ type Odometer struct {
 	FloatCommand
 }
 
-// NewOdometer creates a new commend odometer value
+// NewOdometer creates a new odometer value with the correct parameters.
 func NewOdometer() *Odometer {
 	return &Odometer{
 		baseCommand{SERVICE_01_ID, 0xa6, 4, "odometer"},
@@ -461,7 +461,7 @@ type TransmissionActualGear struct {
 	FloatCommand
 }
 
-// NewTransmissionActualGear creates a new commend transmission actual gear ratio
+// NewTransmissionActualGear creates a new transmission actual gear ratio with the correct parameters.
 func NewTransmissionActualGear() *TransmissionActualGear {
 	return &TransmissionActualGear{
 		baseCommand{SERVICE_01_ID, 0xa4, 4, "transmission_actual_gear"},
