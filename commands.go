@@ -422,6 +422,66 @@ func (cmd *DistSinceDTCClear) SetValue(result *Result) error {
 	return nil
 }
 
+// Odometer represents the distance travelled in kilometers
+//
+// Min: 0
+// Max: 429,496,729.5
+type Odometer struct {
+	baseCommand
+	FloatCommand
+}
+
+// NewOdometer creates a new commend odometer value
+func NewOdometer() *Odometer {
+	return &Odometer{
+		baseCommand{SERVICE_01_ID, 0xa6, 4, "odometer"},
+		FloatCommand{},
+	}
+}
+
+// SetValue processes the byte array value into the right uint value.
+func (cmd *Odometer) SetValue(result *Result) error {
+	payload, err := result.PayloadAsUInt32()
+
+	if err != nil {
+		return err
+	}
+
+	cmd.Value = float32(payload) / 10
+
+	return nil
+}
+
+// TransmissionActualGear represents the gear ratio
+//
+// Min: 0
+// Max: 65.535
+type TransmissionActualGear struct {
+	baseCommand
+	FloatCommand
+}
+
+// NewTransmissionActualGear creates a new commend transmission actual gear ratio
+func NewTransmissionActualGear() *TransmissionActualGear {
+	return &TransmissionActualGear{
+		baseCommand{SERVICE_01_ID, 0xa4, 2, "transmission_actual_gear"},
+		FloatCommand{},
+	}
+}
+
+// SetValue processes the byte array value into the right uint value.
+func (cmd *TransmissionActualGear) SetValue(result *Result) error {
+	payload, err := result.PayloadAsUInt16()
+
+	if err != nil {
+		return err
+	}
+
+	cmd.Value = float32(payload) / 1000
+
+	return nil
+}
+
 // CoolantTemperature represents a command that checks the engine coolant
 // temperature in Celsius.
 //
