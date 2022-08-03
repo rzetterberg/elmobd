@@ -126,6 +126,22 @@ func mockMode1Outputs(subcmd string) []string {
 		return []string{
 			"41 31 02 0C",
 		}
+	} else if strings.HasPrefix(subcmd, "42") { // Control Module Voltage
+		return []string{
+			"41 42 33 90", // 13.2 volts
+		}
+	} else if strings.HasPrefix(subcmd, "A6") { // Odometer
+		return []string{
+			"41 A6 00 06 68 a0", // 42,000.00 km
+		}
+	} else if strings.HasPrefix(subcmd, "46") { // Ambient Air Temperature
+		return []string{
+			"41 46 3A", // 18.0 C
+		}
+	} else if strings.HasPrefix(subcmd, "A4") { // Transmission Actual Gear
+		return []string{
+			"41 A4 27 10 00 00", // 10.0:1
+		}
 	}
 
 	return []string{"NOT SUPPORTED"}

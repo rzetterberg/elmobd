@@ -464,20 +464,20 @@ type TransmissionActualGear struct {
 // NewTransmissionActualGear creates a new commend transmission actual gear ratio
 func NewTransmissionActualGear() *TransmissionActualGear {
 	return &TransmissionActualGear{
-		baseCommand{SERVICE_01_ID, 0xa4, 2, "transmission_actual_gear"},
+		baseCommand{SERVICE_01_ID, 0xa4, 4, "transmission_actual_gear"},
 		FloatCommand{},
 	}
 }
 
 // SetValue processes the byte array value into the right uint value.
 func (cmd *TransmissionActualGear) SetValue(result *Result) error {
-	payload, err := result.PayloadAsUInt16()
+	payload, err := result.PayloadAsUInt32()
 
 	if err != nil {
 		return err
 	}
-
-	cmd.Value = float32(payload) / 1000
+	// A & B are not used in the calculation
+	cmd.Value = float32(payload>>16) / 1000
 
 	return nil
 }
