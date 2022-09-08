@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.8.1] - 2022-09-08
+### Added
+- Added Odometer & TransmissionActualGear commands
+- Increased mock device message support
+
 ## [0.8.0] - 2020-03-09
 ### Added
 - clear codes supported (MIL)
