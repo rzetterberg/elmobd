@@ -215,6 +215,8 @@ func NewDevice(addr string, debug bool) (*Device, error) {
 		dev.rawDevice, err = NewNetDevice(u)
 	case "test":
 		dev.rawDevice, err = &MockDevice{}, nil
+	default:
+		err = fmt.Errorf("unknown device scheme: %q", u.Scheme)
 	}
 
 	if err != nil {

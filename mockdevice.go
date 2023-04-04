@@ -102,29 +102,45 @@ func mockMode1Outputs(subcmd string) []string {
 		return []string{
 			"41 01 FF 00 00 00",
 		}
-	} else if strings.HasPrefix(subcmd, "05") {
+	} else if strings.HasPrefix(subcmd, "05") { // Engine coolant temperature
 		return []string{
-			"41 05 4F",
+			"41 05 4F", // 39 C
 		}
-	} else if strings.HasPrefix(subcmd, "06") {
+	} else if strings.HasPrefix(subcmd, "06") { // Short term fuel trim - Bank 1
 		return []string{
-			"41 06 02",
+			"41 06 02", // -98.4375%
 		}
-	} else if strings.HasPrefix(subcmd, "0C") {
+	} else if strings.HasPrefix(subcmd, "0C") { // Engine speed
 		return []string{
-			"41 0C 03 00",
+			"41 0C 03 00", // 192 rpm
 		}
-	} else if strings.HasPrefix(subcmd, "2F") {
+	} else if strings.HasPrefix(subcmd, "2F") { // Fuel tank level input
 		return []string{
-			"41 2F 6B",
+			"41 2F 6B", // 41.96%
 		}
-	} else if strings.HasPrefix(subcmd, "0D") {
+	} else if strings.HasPrefix(subcmd, "0D") { // Vehicle speed
 		return []string{
-			"41 0D 4B",
+			"41 0D 4B", // 75 km/h
 		}
-	} else if strings.HasPrefix(subcmd, "31") {
+	} else if strings.HasPrefix(subcmd, "31") { // Distance traveled since codes cleared
 		return []string{
-			"41 31 02 0C",
+			"41 31 02 0C", // 524 km
+		}
+	} else if strings.HasPrefix(subcmd, "42") { // Control Module Voltage
+		return []string{
+			"41 42 33 90", // 13.2 volts
+		}
+	} else if strings.HasPrefix(subcmd, "A6") { // Odometer
+		return []string{
+			"41 A6 00 06 68 a0", // 42,000.00 km
+		}
+	} else if strings.HasPrefix(subcmd, "46") { // Ambient Air Temperature
+		return []string{
+			"41 46 3A", // 18.0 C
+		}
+	} else if strings.HasPrefix(subcmd, "A4") { // Transmission Actual Gear
+		return []string{
+			"41 A4 27 10 00 00", // 10.0:1
 		}
 	}
 
