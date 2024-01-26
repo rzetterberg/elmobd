@@ -1003,7 +1003,7 @@ type ControlModuleVoltage struct {
 	FloatCommand
 }
 
-// NewThrottlePosition creates a new ThrottlePosition with the right parameters.
+// NewControlModuleVoltage creates a new ControlModuleVoltage with the right parameters.
 func NewControlModuleVoltage() *ControlModuleVoltage {
 	return &ControlModuleVoltage{
 		baseCommand{SERVICE_01_ID, 0x42, 2, "control_module_voltage"},
@@ -1034,7 +1034,7 @@ type AmbientTemperature struct {
 	IntCommand
 }
 
-// NewCoolantTemperature creates a new CoolantTemperature with the right
+// NewAmbientTemperature creates a new AmbientTemperature with the right
 // parameters.
 func NewAmbientTemperature() *AmbientTemperature {
 	return &AmbientTemperature{
@@ -1066,7 +1066,7 @@ type EngineOilTemperature struct {
 	IntCommand
 }
 
-// NewCoolantTemperature creates a new CoolantTemperature with the right
+// NewEngineOilTemperature creates a new EngineOilTemperature with the right
 // parameters.
 func NewEngineOilTemperature() *EngineOilTemperature {
 	return &EngineOilTemperature{
@@ -1094,7 +1094,7 @@ type AbsoluteBarometricPressure struct {
 	IntCommand
 }
 
-// NewCoolantTemperature creates a new CoolantTemperature with the right
+// NewAbsoluteBarometricPressure creates a new AbsoluteBarometricPressure with the right
 // parameters.
 func NewAbsoluteBarometricPressure() *AbsoluteBarometricPressure {
 	return &AbsoluteBarometricPressure{
