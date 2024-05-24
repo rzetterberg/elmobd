@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.9.1] - 2024-05-24
+### Added
+- Added asynchronous support using goroutines
+
 ## [0.8.1] - 2022-09-08
 ### Added
 - Added Odometer & TransmissionActualGear commands

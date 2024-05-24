@@ -2,6 +2,8 @@ package elmobd
 
 import (
 	"fmt"
+	"time"
+	"sync"
 	"net/url"
 	"os"
 	"strconv"
@@ -39,7 +41,6 @@ func NewResult(rawLine string) (*Result, error) {
 			"Expected at least 3 OBD literals: %s", rawLine,
 		)
 	}
-
 	result := Result{make([]byte, 0)}
 
 	for i := range literals {
@@ -232,6 +233,194 @@ func NewDevice(addr string, debug bool) (*Device, error) {
 	return &dev, nil
 }
 
+type Event struct {
+	trigger Trigger
+	actions []Action
+}
+
+type Act func(OBDCommand, interface{}) 
+type Action struct {
+	callback Act
+	cxt interface{}
+}
+func CreateAction(callback Act, cxt interface{}) *Action {
+	return &Action{callback: callback, cxt: cxt}
+}
+
+type Aim func(OBDCommand, PreviousOBDCommand, interface{}) bool
+type Trigger struct {
+	callback Aim
+	cxt interface{}
+}
+
+
+type AsyncDeviceControls interface {
+	Start() error
+	Stop() error
+	Watch(OBDCommand, []Action) error
+	WatchMultiple(map[OBDCommand][]Action) error 
+	WatchOn(OBDCommand, Event) error 
+	WatchOnMultiple(map[OBDCommand][]Event) error 
+	UnWatchAll() error 
+	UnWatch(OBDCommand) error 
+	UnWatchEvent(OBDCommand, Event) error 
+	UnWatchEvents(OBDCommand, []Event) error 
+}
+
+type AsyncDevice struct {
+	device   *Device
+	isRunning bool 
+	delay time.Duration
+	previous map[OBDCommand]*PreviousOBDCommand
+	cmdEvents map[OBDCommand][]Event
+}
+
+type PreviousOBDCommand struct {
+	value string
+}
+
+func (cmd *PreviousOBDCommand) ValueAsLit() string {
+	return cmd.value
+}
+
+func (cmd *PreviousOBDCommand) SetValue(value string) {
+	cmd.value = value
+}
+
+func (asyncDev *AsyncDevice) Start() error {
+	if asyncDev.isRunning {
+		return fmt.Errorf("Cannot start, in progress")
+	}
+	asyncDev.isRunning = true
+	go func(){
+		var wg sync.WaitGroup
+		for asyncDev.isRunning {
+			for cmd, cmdTriggers := range asyncDev.cmdEvents {
+				for _, cmdTrigger := range cmdTriggers {
+					wg.Add(1)
+					go asyncDev.run(&wg, cmd, cmdTrigger)
+				}
+			}
+			wg.Wait()
+			time.Sleep(asyncDev.delay)
+		}
+	}()
+	return nil
+}
+
+func (asyncDev *AsyncDevice) run(wg *sync.WaitGroup, cmd OBDCommand, triggerActions Event){
+	defer wg.Done()
+	res, err := asyncDev.device.RunOBDCommand(cmd)
+	if err != nil {
+		return
+	}
+	if triggerActions.trigger.callback(res, *asyncDev.previous[cmd], res) {
+		defer asyncDev.previous[cmd].SetValue(res.ValueAsLit())
+		var callbackWg sync.WaitGroup
+		for _, action := range triggerActions.actions {
+			callbackWg.Add(1)
+			go func(wg *sync.WaitGroup){
+				defer wg.Done()
+				action.callback(res, action.cxt)
+			}(&callbackWg)
+		}
+	}
+}
+
+func (asyncDev *AsyncDevice) Stop() error {
+	if !asyncDev.isRunning {
+		return fmt.Errorf("Cannot stop, not in progress")
+	}
+	asyncDev.isRunning = false
+	return nil
+}
+
+func defaultTrigger(cmd OBDCommand, prev PreviousOBDCommand, cxt interface{}) bool {
+	return cmd.ValueAsLit() != prev.ValueAsLit()
+}
+
+func (asyncDev *AsyncDevice) Watch(cmd OBDCommand, actions []Action) error {
+	return asyncDev.WatchOn(cmd, Event{
+		trigger: Trigger{callback: defaultTrigger}, 
+		actions: actions,
+	})
+}
+
+func (asyncDev *AsyncDevice) WatchOn(cmd OBDCommand, event Event) error {
+	if asyncDev.isRunning {
+		return fmt.Errorf("Can not watch while running")
+	}
+	if _, ok := asyncDev.previous[cmd]; !ok {
+		asyncDev.previous[cmd] = &PreviousOBDCommand{}
+	}
+	asyncDev.cmdEvents[cmd] = append(asyncDev.cmdEvents[cmd], event)
+	return nil
+}
+
+func (asyncDev *AsyncDevice) WatchMultiple(cmd_actions map[OBDCommand][]Action) []error {
+	var errs [] error
+	for cmd, actions := range(cmd_actions) {
+		if err := asyncDev.Watch(cmd, actions); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errs
+}
+
+func (asyncDev *AsyncDevice) WatchOnMultiple(cmd_events map[OBDCommand][]Event) []error {
+	var errs [] error
+	for cmd, events := range(cmd_events) {
+		for _, event := range(events) {
+			if err := asyncDev.WatchOn(cmd, event); err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}
+	return errs
+} 
+ 
+
+func (asyncDev *AsyncDevice) UnWatchAll() error {
+	if asyncDev.isRunning {
+		return fmt.Errorf("Can not stop watch while running")
+	}
+	for cmd := range asyncDev.previous {
+		delete(asyncDev.previous, cmd)
+	}
+	for cmd := range asyncDev.cmdEvents {
+		delete(asyncDev.cmdEvents, cmd)
+	}
+	return nil
+}
+
+func (asyncDev *AsyncDevice) UnWatch(cmd OBDCommand) error {
+	if asyncDev.isRunning {
+		return fmt.Errorf("Can not stop watch while running")
+	}
+	if _, ok := asyncDev.cmdEvents[cmd]; !ok {
+		return fmt.Errorf("can not unwatch function")
+	}
+	delete(asyncDev.cmdEvents, cmd)
+	if _, ok := asyncDev.previous[cmd]; !ok {
+		return fmt.Errorf("can not unwatch function")
+	}
+	delete(asyncDev.previous, cmd)
+	return nil
+}
+
+func NewAsyncDevice(addr string, debug bool, delay time.Duration) (*AsyncDevice, error) {
+	dev, err := NewDevice(addr, debug)
+	if err != nil {
+		return nil, err
+	}
+	return &AsyncDevice{
+		device: dev, 
+		delay: delay, 
+		isRunning: false,
+		cmdEvents: make(map[OBDCommand][]Event),
+		previous: make(map[OBDCommand]*PreviousOBDCommand),
+	}, nil
+}
 // SetAutomaticProtocol tells the ELM327 device to automatically discover what
 // protocol to talk to the car with. How the protocol is chosen is something
 // that the ELM327 does internally. If you're interested in how this works you
