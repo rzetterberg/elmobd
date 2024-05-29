@@ -252,6 +252,9 @@ type Trigger struct {
 	callback Aim
 	cxt interface{}
 }
+func CreateTrigger(callback Aim, cxt interface{}) *Trigger {
+	return &Trigger{callback: callback, cxt: cxt}
+}
 
 
 type AsyncDeviceControls interface {
