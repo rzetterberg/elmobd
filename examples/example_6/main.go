@@ -4,16 +4,18 @@ import (
 	"flag"
 	"fmt"
 	"time"
-	"github.com/rzetterberg/elmobd"
+	obd "github.com/rzetterberg/elmobd"
 )
 
-func speed_callback (res elmobd.OBDCommand) {
-	fmt.Println("Speed from inside callback", res.ValueAsLit())
+func speed_callback (res obd.OBDCommand, cxt interface{}) {
+	fmt.Println("Speed from inside callback", res.ValueAsLit(), *cxt.(*string)) 
 }
 
-func rpm_callback (res elmobd.OBDCommand) {
-	fmt.Println("RPM from inside callback", res.ValueAsLit())
+func rpm_callback (res obd.OBDCommand, cxt interface{}) {
+	fmt.Println("RPM from inside callback", res.ValueAsLit(), *cxt.(*string))
 }
+
+
 
 func main() {
 	addr := flag.String(
@@ -27,17 +29,21 @@ func main() {
 		"Enable debug outputs",
 	)
 	flag.Parse()
-
-	//sample
-	asyncDev, err := elmobd.NewAsyncDevice(*addr, *debug, 200 * time.Millisecond)
+	asyncDev, err := obd.NewAsyncDevice(*addr, *debug, 200 * time.Millisecond)
 	if err != nil {
 		fmt.Println("Failed to create new async device ", err)
 		return
 	}
-	
-	asyncDev.Watch(elmobd.NewVehicleSpeed(), []elmobd.Action{speed_callback})
-	asyncDev.Watch(elmobd.NewEngineRPM(), []elmobd.Action{rpm_callback})
+	context := "context"
+	speed_action := *obd.CreateAction(speed_callback, &context)
+	asyncDev.Watch(obd.NewVehicleSpeed(), []obd.Action{speed_action})
+
+	rpm_action := *obd.CreateAction(rpm_callback, &context)
+	asyncDev.Watch(obd.NewEngineRPM(), []obd.Action{rpm_action})
+
 	asyncDev.Start() //the callback will now be fired upon receipt of new values
 	defer asyncDev.Stop()
 	time.Sleep(60 * time.Second)
+
 }
+
